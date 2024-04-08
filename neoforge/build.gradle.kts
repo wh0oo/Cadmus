@@ -9,15 +9,6 @@ val common: Configuration by configurations.creating {
 }
 
 dependencies {
-    val minecraftVersion: String by project
-    val neoforgeVersion: String by project
-    val reiVersion: String by project
-
-    neoForge(group = "net.neoforged", name = "neoforge", version = neoforgeVersion)
-
-//    modLocalRuntime(group = "me.shedaniel", name = "RoughlyEnoughItems-neoforge", version = reiVersion)
-//    modLocalRuntime(group = "dev.architectury", name = "architectury-neoforge", version = "10.0.16")
-
     common(project(":common", configuration = "namedElements")) {
         isTransitive = false
     }
@@ -25,14 +16,15 @@ dependencies {
         isTransitive = false
     }
 
-    forgeRuntimeLibrary("com.teamresourceful:yabn:1.0.3")
+    val minecraftVersion: String by project
+    val neoforgeVersion: String by project
+    val reiVersion: String by project
+
+    neoForge(group = "net.neoforged", name = "neoforge", version = neoforgeVersion)
+
     forgeRuntimeLibrary("com.teamresourceful:bytecodecs:1.0.2")
-}
 
-tasks.processResources {
-    inputs.property("version", version)
-
-    filesMatching("META-INF/mods.toml") {
-        expand("version" to version)
-    }
+    modLocalRuntime(group = "maven.modrinth", name = "xaeros-world-map", version = "1.38.2_NeoForge_1.20.4")
+    modLocalRuntime(group = "maven.modrinth", name = "xaeros-minimap", version = "24.0.3_NeoForge_1.20.4")
+    modLocalRuntime(group = "maven.modrinth", name = "journeymap", version = "1.20.4-5.9.24-neoforge")
 }

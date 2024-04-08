@@ -2,58 +2,45 @@ package earth.terrarium.cadmus.fabric;
 
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.api.claims.InteractionType;
-import earth.terrarium.cadmus.common.commands.ModCommands;
-import earth.terrarium.cadmus.compat.fabric.cpa.CommonProtectionApiCompat;
+import earth.terrarium.cadmus.common.commands.CadmusCommands;
+import earth.terrarium.cadmus.common.flags.Flags;
+import earth.terrarium.cadmus.common.protections.types.fabric.BlockBreakProtectionImpl;
+import earth.terrarium.cadmus.common.protections.types.fabric.BlockInteractProtectionImpl;
+import earth.terrarium.cadmus.common.protections.types.fabric.EntityDamageProtectionImpl;
+import earth.terrarium.cadmus.common.protections.types.fabric.EntityInteractProtectionImpl;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.player.*;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.world.InteractionResult;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.item.ItemStack;
 
 public class CadmusFabric implements ModInitializer {
+
     @Override
     public void onInitialize() {
         Cadmus.init();
+        ServerLifecycleEvents.SERVER_STARTED.register(Cadmus::onServerStarted);
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> Cadmus.onPlayerJoin(handler.player));
+        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> CadmusCommands.register(dispatcher, context));
 
-        if (FabricLoader.getInstance().isModLoaded("common-protection-api")) {
-            CommonProtectionApiCompat.init();
-        }
-        CommandRegistrationCallback.EVENT.register(ModCommands::register);
-        ServerLifecycleEvents.SERVER_STARTED.register(Cadmus::serverStarted);
-        registerChunkProtectionEvents();
-    }
+        BlockBreakProtectionImpl.register();
+        BlockInteractProtectionImpl.register();
+        EntityInteractProtectionImpl.register();
+        EntityDamageProtectionImpl.register();
 
-    private static void registerChunkProtectionEvents() {
-        PlayerBlockBreakEvents.BEFORE.register((level, player, pos, blockState, blockEntity) -> ClaimApi.API.canBreakBlock(level, pos, player));
-
-        UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
-            if (!ClaimApi.API.canInteractWithBlock(level, hitResult.getBlockPos(), InteractionType.USE, player)) {
-                return InteractionResult.FAIL;
+        UseItemCallback.EVENT.register((player, level, hand) -> {
+            ItemStack stack = player.getItemInHand(hand);
+            if (!level.isClientSide()) {
+                var claim = ClaimApi.API.getClaim(level, player.chunkPosition());
+                if (claim.isPresent()) {
+                    if (!Flags.USE.get(level.getServer(), claim.get().first())) {
+                        return InteractionResultHolder.fail(stack);
+                    }
+                }
             }
-            return InteractionResult.PASS;
-        });
-
-        UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-            if (!ClaimApi.API.canInteractWithEntity(level, entity, player)) {
-                return InteractionResult.FAIL;
-            }
-            return InteractionResult.PASS;
-        });
-
-        AttackBlockCallback.EVENT.register((player, level, hand, blockPos, direction) -> {
-            if (!ClaimApi.API.canInteractWithBlock(level, blockPos, InteractionType.ATTACK, player)) {
-                return InteractionResult.FAIL;
-            }
-            return InteractionResult.PASS;
-        });
-
-        AttackEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-            if (!ClaimApi.API.canDamageEntity(level, entity, player)) {
-                return InteractionResult.FAIL;
-            }
-            return InteractionResult.PASS;
+            return InteractionResultHolder.pass(stack);
         });
     }
 }

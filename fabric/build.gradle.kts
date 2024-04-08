@@ -18,6 +18,13 @@ repositories {
 }
 
 dependencies {
+    common(project(":common", configuration = "namedElements")) {
+        isTransitive = false
+    }
+    shadowCommon(project(path = ":common", configuration = "transformProductionFabric")) {
+        isTransitive = false
+    }
+
     val minecraftVersion: String by project
     val fabricLoaderVersion: String by project
     val fabricApiVersion: String by project
@@ -27,18 +34,6 @@ dependencies {
     modApi(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "$fabricApiVersion+$minecraftVersion")
     include(modImplementation(group = "eu.pb4", name = "common-protection-api", version = commonProtectionApiVersion))
 
-    common(project(":common", configuration = "namedElements")) {
-        isTransitive = false
-    }
-    shadowCommon(project(path = ":common", configuration = "transformProductionFabric")) {
-        isTransitive = false
-    }
-}
-
-tasks.processResources {
-    inputs.property("version", version)
-
-    filesMatching("fabric.mod.json") {
-        expand("version" to version)
-    }
+    modLocalRuntime(group = "maven.modrinth", name = "xaeros-world-map", version = "1.38.1_Fabric_1.20.4")
+    modLocalRuntime(group = "maven.modrinth", name = "xaeros-minimap", version = "24.0.3_Fabric_1.20.4")
 }

@@ -2,7 +2,7 @@ package earth.terrarium.cadmus.compat.fabric.cpa;
 
 import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.api.claims.InteractionType;
+import earth.terrarium.cadmus.common.protections.Protections;
 import eu.pb4.common.protection.api.ProtectionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -37,48 +37,45 @@ public class CadmusProtectionProvider implements ProtectionProvider {
     @Override
     public boolean canBreakBlock(Level level, BlockPos pos, GameProfile profile, @Nullable Player player) {
         if (player != null) {
-            return ClaimApi.API.canBreakBlock(level, pos, player);
+            return Protections.BLOCK_BREAKING.canBreakBlock(player, pos);
         }
-        return ClaimApi.API.canBreakBlock(level, pos, profile.getId());
+        return Protections.BLOCK_BREAKING.canBreakBlock(level, profile.getId(), pos);
     }
 
     @Override
     public boolean canExplodeBlock(Level level, BlockPos pos, Explosion explosion, GameProfile profile, @Nullable Player player) {
-        if (player != null) {
-            return ClaimApi.API.canExplodeBlock(level, pos, explosion, player);
-        }
-        return ClaimApi.API.canExplodeBlock(level, pos, explosion, profile.getId());
+        return Protections.BLOCK_EXPLOSIONS.canExplodeBlock(level, pos, explosion);
     }
 
     @Override
     public boolean canPlaceBlock(Level level, BlockPos pos, GameProfile profile, @Nullable Player player) {
         if (player != null) {
-            return ClaimApi.API.canPlaceBlock(level, pos, player);
+            return Protections.BLOCK_PLACING.canPlaceBlock(player, pos, level.getBlockState(pos));
         }
-        return ClaimApi.API.canPlaceBlock(level, pos, profile.getId());
+        return Protections.BLOCK_PLACING.canPlaceBlock(level, profile.getId(), pos, level.getBlockState(pos));
     }
 
     @Override
     public boolean canInteractBlock(Level level, BlockPos pos, GameProfile profile, @Nullable Player player) {
         if (player != null) {
-            return ClaimApi.API.canInteractWithBlock(level, pos, InteractionType.USE, player);
+            return Protections.BLOCK_INTERACTIONS.canInteractWithBlock(player, pos, level.getBlockState(pos));
         }
-        return ClaimApi.API.canInteractWithBlock(level, pos, InteractionType.USE, profile.getId());
+        return Protections.BLOCK_INTERACTIONS.canInteractWithBlock(level, profile.getId(), pos, level.getBlockState(pos));
     }
 
     @Override
     public boolean canInteractEntity(Level level, Entity entity, GameProfile profile, @Nullable Player player) {
         if (player != null) {
-            return ClaimApi.API.canInteractWithEntity(level, entity, player);
+            return Protections.ENTITY_INTERACTIONS.canInteractWithEntity(player, entity);
         }
-        return ClaimApi.API.canInteractWithEntity(level, entity, profile.getId());
+        return Protections.ENTITY_INTERACTIONS.canInteractWithEntity(level, profile.getId(), entity);
     }
 
     @Override
     public boolean canDamageEntity(Level level, Entity entity, GameProfile profile, @Nullable Player player) {
         if (player != null) {
-            return ClaimApi.API.canDamageEntity(level, entity, player);
+            return Protections.ENTITY_DAMAGE.canDamageEntity(player, entity);
         }
-        return ClaimApi.API.canDamageEntity(level, entity, profile.getId());
+        return Protections.ENTITY_DAMAGE.canDamageEntity(level, profile.getId(), entity);
     }
 }

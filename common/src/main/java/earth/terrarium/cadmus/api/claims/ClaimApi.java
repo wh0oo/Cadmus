@@ -1,278 +1,269 @@
 package earth.terrarium.cadmus.api.claims;
 
 import earth.terrarium.cadmus.api.ApiHelper;
-import earth.terrarium.cadmus.common.teams.TeamHelper;
+import earth.terrarium.cadmus.api.teams.TeamApi;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectBooleanPair;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
+import java.util.*;
 
 public interface ClaimApi {
+
     ClaimApi API = ApiHelper.load(ClaimApi.class);
 
     /**
-     * Checks if the player can claim the chunk.
+     * Claims a chunk.
      *
-     * @param level     The level to check.
-     * @param pos       The chunk position to check.
-     * @param id        The id of the claimer.
+     * @param level     The level to claim.
+     * @param id        The team ID.
+     * @param pos       The chunk position to claim.
      * @param chunkLoad If the chunk should be chunk loaded.
-     * @param player    The player to check.
-     * @return True if the player has enough claims to claim the chunk, false otherwise.
      */
-    boolean canClaim(ServerLevel level, ChunkPos pos, String id, boolean chunkLoad, UUID player);
+    void claim(Level level, UUID id, ChunkPos pos, boolean chunkLoad);
 
     /**
-     * Checks if the player can claim the chunk.
+     * Claims a set of chunks.
      *
-     * @param level     The level to check.
-     * @param pos       The chunk position to check.
-     * @param chunkLoad If the chunk should be chunk loaded.
-     * @param player    The player to check.
-     * @return True if the player has enough claims to claim the chunk, false otherwise.
+     * @param level     The level to claim.
+     * @param id        The team ID.
+     * @param positions The positions mapped to chunk load status.
      */
-    default boolean canClaim(ServerLevel level, ChunkPos pos, boolean chunkLoad, @NotNull ServerPlayer player) {
-        return this.canClaim(level, pos, TeamHelper.getTeamId(player.server, player.getUUID()), chunkLoad, player.getUUID());
+    void claim(Level level, UUID id, Object2BooleanMap<ChunkPos> positions);
+
+    /**
+     * Claims a chunk. If the player is on a team, use the team ID, otherwise use the player's UUID.
+     *
+     * @param player    The claimer.
+     * @param pos       The chunk position to claim.
+     * @param chunkLoad If the chunk should be chunk loaded.
+     */
+    default void claim(@NotNull ServerPlayer player, ChunkPos pos, boolean chunkLoad) {
+        this.claim(player.serverLevel(), TeamApi.API.getId(player), pos, chunkLoad);
     }
 
     /**
-     * Claims the chunk.
+     * Claims a set of chunks. If the player is on a team, use the team ID, otherwise use the player's UUID.
      *
-     * @param level     The level to claim.
-     * @param pos       The chunk position to claim.
-     * @param id        The id of the claimer.
-     * @param chunkLoad If the chunk should be chunk loaded.
+     * @param player    The claimer.
+     * @param positions The positions mapped to chunk load status.
      */
-    void claim(ServerLevel level, ChunkPos pos, String id, boolean chunkLoad);
-
-    /**
-     * Claims the chunk.
-     *
-     * @param level     The level to claim.
-     * @param pos       The chunk position to claim.
-     * @param chunkLoad If the chunk should be chunk loaded.
-     * @param player    The player to claim the chunk.
-     */
-    default void claim(ServerLevel level, ChunkPos pos, boolean chunkLoad, @NotNull ServerPlayer player) {
-        this.claim(level, pos, TeamHelper.getTeamId(player.server, player.getUUID()), chunkLoad);
+    default void claim(@NotNull ServerPlayer player, Object2BooleanMap<ChunkPos> positions) {
+        this.claim(player.serverLevel(), TeamApi.API.getId(player), positions);
     }
 
     /**
-     * Unclaims the chunk.
+     * Unclaims a chunk.
      *
-     * @param level The level to unclaim.
+     * @param level The level.
+     * @param id    The team ID.
      * @param pos   The chunk position to unclaim.
-     * @param id    The id of the claimer.
      */
-    void unclaim(ServerLevel level, ChunkPos pos, String id);
+    void unclaim(Level level, UUID id, ChunkPos pos);
 
     /**
-     * Unclaims the chunk.
+     * Unclaims a set of chunks.
      *
-     * @param level  The level to unclaim.
-     * @param pos    The chunk position to unclaim.
-     * @param player The player to unclaim the chunk.
+     * @param level     The level.
+     * @param id        The team ID.
+     * @param positions The chunk position to unclaim.
      */
-    default void unclaim(ServerLevel level, ChunkPos pos, @NotNull ServerPlayer player) {
-        this.unclaim(level, pos, TeamHelper.getTeamId(player.server, player.getUUID()));
+    void unclaim(Level level, UUID id, Set<ChunkPos> positions);
+
+    /**
+     * Unclaims a chunk. If the player is on a team, use the team ID, otherwise use the player's UUID.
+     *
+     * @param player The unclaimer.
+     * @param pos    The chunk position to unclaim.
+     */
+    default void unclaim(@NotNull ServerPlayer player, ChunkPos pos) {
+        this.unclaim(player.serverLevel(), TeamApi.API.getId(player), pos);
     }
 
+    /**
+     * Unclaims a set of chunks. If the player is on a team, use the team ID, otherwise use the player's UUID.
+     *
+     * @param player    The unclaimer.
+     * @param positions The chunk positions to unclaim.
+     */
+    default void unclaim(@NotNull ServerPlayer player, Set<ChunkPos> positions) {
+        this.unclaim(player.serverLevel(), TeamApi.API.getId(player), positions);
+    }
 
     /**
-     * Checks if the chunk is claimed.
+     * Clears all claims in the level for the given team.
      *
-     * @param level The level to check.
-     * @param pos   The chunk position to check.
+     * @param level The level.
+     * @param id    The team ID.
+     */
+    void clear(Level level, UUID id);
+
+    /**
+     * Completely clears all claims in every level.
+     *
+     * @param server The server.
+     */
+    void clearAll(MinecraftServer server);
+
+    /**
+     * Clears all claims in the level for the given player or their team if they're in one.
+     *
+     * @param player The team member.
+     */
+    default void clear(@NotNull Player player) {
+        this.clear(player.level(), TeamApi.API.getId(player));
+    }
+
+    /**
+     * Gets a claim.
+     *
+     * @param level The level to get the claim from.
+     * @param pos   The chunk position to get the claim from.
+     * @return The claim ID and chunk load status if the chunk is claimed, empty otherwise.
+     */
+    Optional<ObjectBooleanPair<UUID>> getClaim(Level level, ChunkPos pos);
+
+    /**
+     * Checks if a chunk is claimed.
+     *
+     * @param level The level to check the claim from.
+     * @param pos   The chunk position to check the claim from.
      * @return True if the chunk is claimed, false otherwise.
      */
-    boolean isClaimed(Level level, ChunkPos pos);
-
-    /**
-     * Checks if the chunk is chunk loaded.
-     *
-     * @param level The level to check.
-     * @param pos   The chunk position to check.
-     * @return True if the chunk is chunk loaded, false otherwise.
-     */
-    boolean isChunkLoaded(Level level, ChunkPos pos);
-
-    /**
-     * Checks if the block is in a claimed chunk.
-     *
-     * @param level The level to check.
-     * @param pos   The block position to check.
-     * @return True if the block is in a claimed chunk, false otherwise.
-     */
-    default boolean isClaimed(Level level, BlockPos pos) {
-        return this.isClaimed(level, new ChunkPos(pos));
+    default boolean isClaimed(Level level, ChunkPos pos) {
+        return this.getClaim(level, pos).isPresent();
     }
 
     /**
-     * Checks if a player can break the block.
+     * Checks if a block is claimed.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param player The player to check.
-     * @return True if the player can break the block, false otherwise.
+     * @param level The level to check the claim from.
+     * @param pos   The block position to check the claim from.
+     * @return True if the chunk is claimed, false otherwise.
      */
-    boolean canBreakBlock(Level level, BlockPos pos, UUID player);
+    default boolean isClaimed(Level level, BlockPos pos) {
+        return isClaimed(level, new ChunkPos(pos));
+    }
 
     /**
-     * Checks if a player can break the block.
+     * Checks if the chunk the player is in is claimed.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param player The player to check.
-     * @return True if the player can break the block, false otherwise.
+     * @param player The player to check the claim from.
+     * @return True if the chunk is claimed, false otherwise.
      */
-    boolean canBreakBlock(Level level, BlockPos pos, @NotNull Player player);
+    default boolean isClaimed(Player player) {
+        return this.isClaimed(player.level(), player.chunkPosition());
+    }
 
     /**
-     * Checks if a player can place the block.
+     * Gets all claims within the given chunk positions.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param player The player to check.
-     * @return True if the player can place the block, false otherwise.
+     * @param level     The level to get the claims from.
+     * @param positions The chunk positions to get the claim from.
+     * @return The claim ID and chunk load status for all claimed chunks.
      */
-    boolean canPlaceBlock(Level level, BlockPos pos, UUID player);
+    List<ObjectBooleanPair<UUID>> getClaims(Level level, Collection<ChunkPos> positions);
 
     /**
-     * Checks if a player can place the block.
+     * Gets all claims for the given team iD.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param player The player to check.
-     * @return True if the player can place the block, false otherwise.
+     * @param level The level to get the claims from.
+     * @param id    The team ID.
+     * @return A map of chunk positions to chunk load status.
      */
-    boolean canPlaceBlock(Level level, BlockPos pos, @NotNull Player player);
+    Optional<Object2BooleanMap<ChunkPos>> getOwnedClaims(Level level, UUID id);
 
     /**
-     * Checks if the block can be exploded.
+     * Gets all claims for the given player. If the player is on a team, retrieves the team's claims, otherwise retrieves the player's claims.
      *
-     * @param level The level to check.
-     * @param pos   The block position to check.
-     * @return True if the block can be exploded, false otherwise.
+     * @param player The player to get the claims from.
+     * @return A map of chunk positions to chunk load status.
      */
-    boolean canExplodeBlock(Level level, ChunkPos pos);
+    default Optional<Object2BooleanMap<ChunkPos>> getOwnedClaims(Player player) {
+        return this.getOwnedClaims(player.level(), TeamApi.API.getId(player));
+    }
 
     /**
-     * Checks if the block can be exploded by the player.
+     * Gets all claims for the given level.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param player The player to check.
-     * @return True if the block can be exploded by the player, false otherwise.
+     * @param level The level to get the claims from.
+     * @return A map of chunk positions to a pair of claim ID and chunk load status.
      */
-    boolean canExplodeBlock(Level level, BlockPos pos, Explosion explosion, UUID player);
+    Object2ObjectMap<ChunkPos, ObjectBooleanPair<UUID>> getAllClaims(ServerLevel level);
 
     /**
-     * Checks if the block can be exploded by the player.
+     * Gets all claims for the given level.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param player The player to check.
-     * @return True if the block can be exploded by the player, false otherwise.
+     * @param level The level to get the claims from.
+     * @return A map of chunk positions to a pair of claim ID and chunk load status.
      */
-    boolean canExplodeBlock(Level level, BlockPos pos, Explosion explosion, @NotNull Player player);
+    Object2ObjectMap<UUID, Object2BooleanMap<ChunkPos>> getAllClaimsByOwner(ServerLevel level);
+
+    default boolean teamExists(ServerLevel level, UUID id) {
+        return this.getAllClaimsByOwner(level).containsKey(id);
+    }
 
     /**
-     * Checks if a player can interact with the block.
+     * Gets a claim that has been synced to the client for the given level.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param type   The interaction type to check.
-     * @param player The player to check.
-     * @return True if the player can interact with the block, false otherwise.
+     * @param level The level to get the claim from.
+     * @param pos   The chunk position to get the claim from.
+     * @return The claim ID and chunk load status if the chunk is claimed, empty otherwise.
      */
-    boolean canInteractWithBlock(Level level, BlockPos pos, InteractionType type, UUID player);
+    Optional<ObjectBooleanPair<UUID>> getClientClaim(ResourceKey<Level> level, ChunkPos pos);
 
     /**
-     * Checks if a player can interact with the block.
+     * Gets all claims that have been synced to the client for the given level.
      *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param type   The interaction type to check.
-     * @param player The player to check.
-     * @return True if the player can interact with the block, false otherwise.
+     * @param level The level to get the claims from.
+     * @return A map of chunk positions to a pair of claim ID and chunk load status.
      */
-    boolean canInteractWithBlock(Level level, BlockPos pos, InteractionType type, @NotNull Player player);
+    Object2ObjectMap<ChunkPos, ObjectBooleanPair<UUID>> getAllClientClaims(ResourceKey<Level> level);
 
     /**
-     * Checks if a player can interact with the entity.
+     * Gets the maximum number of claims the team can have.
      *
-     * @param level  The level to check.
-     * @param entity The entity to check.
-     * @param player The player to check.
-     * @return True if the player can interact with the entity, false otherwise.
+     * @param level The level.
+     * @param id    The team ID.
+     * @return The maximum number of claims the team can have.
      */
-    boolean canInteractWithEntity(Level level, Entity entity, UUID player);
+    int getMaxClaims(ServerLevel level, UUID id);
 
     /**
-     * Checks if a player can interact with the entity.
+     * Gets the maximum number of chunk loaded claims the team can have.
      *
-     * @param level  The level to check.
-     * @param entity The entity to check.
-     * @param player The player to check.
-     * @return True if the player can interact with the entity, false otherwise.
+     * @param level The level.
+     * @param id    The team ID.
+     * @return The maximum number of chunk loaded claims the team can have.
      */
-    boolean canInteractWithEntity(Level level, Entity entity, @NotNull Player player);
+    int getMaxChunkLoadedClaims(ServerLevel level, UUID id);
 
     /**
-     * Checks if a player can damage the entity.
+     * Gets the maximum number of claims the player can have.
      *
-     * @param level  The level to check.
-     * @param entity The entity to check.
-     * @param player The player to check.
-     * @return True if the player can damage the entity, false otherwise.
+     * @param player The player to get the claims from.
+     * @return The maximum number of claims the player can have.
      */
-    boolean canDamageEntity(Level level, Entity entity, UUID player);
+    default int getMaxClaims(@NotNull ServerPlayer player) {
+        return this.getMaxClaims(player.serverLevel(), TeamApi.API.getId(player));
+    }
 
     /**
-     * Checks if a player can damage the entity.
+     * Gets the maximum number of chunk loaded claims the player can have.
      *
-     * @param level  The level to check.
-     * @param entity The entity to check.
-     * @param player The player to check.
-     * @return True if the player can damage the entity, false otherwise.
+     * @param player The player to get the claims from.
+     * @return The maximum number of chunk loaded claims the player can have.
      */
-    boolean canDamageEntity(Level level, Entity entity, @NotNull Player player);
-
-    /**
-     * Checks if the entity can grief.
-     *
-     * @param level  The level to check.
-     * @param entity The entity to check.
-     * @return True if the entity can grief, false otherwise.
-     */
-    boolean canEntityGrief(Level level, @NotNull Entity entity);
-
-    /**
-     * Checks if the entity can grief.
-     *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param entity The entity to check.
-     * @return True if the entity can grief, false otherwise.
-     */
-    boolean canEntityGrief(Level level, BlockPos pos, @NotNull Entity entity);
-
-    /**
-     * Checks if the entity can pickup the item.
-     *
-     * @param level  The level to check.
-     * @param pos    The block position to check.
-     * @param item   The item to check.
-     * @param picker The entity to check.
-     * @return True if the entity can pickup the item, false otherwise.
-     */
-    boolean canPickupItem(Level level, BlockPos pos, ItemEntity item, @NotNull Entity picker);
+    default int getMaxChunkLoadedClaims(@NotNull ServerPlayer player) {
+        return this.getMaxChunkLoadedClaims(player.serverLevel(), TeamApi.API.getId(player));
+    }
 }

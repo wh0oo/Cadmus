@@ -29,7 +29,7 @@
       "earth.terrarium.cadmus.client.compat.rei.CadmusReiClientPlugin"
     ],
     "journeymap": [
-      "earth.terrarium.cadmus.common.compat.journeymap.JourneyMapCompat"
+      "earth.terrarium.cadmus.client.compat.journeymap.JourneyMapCompat"
     ]
   },
   "mixins": [

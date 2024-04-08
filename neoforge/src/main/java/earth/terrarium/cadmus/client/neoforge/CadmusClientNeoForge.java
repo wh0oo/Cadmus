@@ -11,12 +11,14 @@ import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class CadmusClientNeoForge {
 
     public static void init() {
         NeoForge.EVENT_BUS.addListener(CadmusClientNeoForge::onClientTick);
+        NeoForge.EVENT_BUS.addListener(CadmusClientNeoForge::onPlayerLoggedOut);
         NeoForge.EVENT_BUS.addListener(CadmusClientNeoForge::onRegisterClientCommands);
     }
 
@@ -27,8 +29,12 @@ public class CadmusClientNeoForge {
 
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase.equals(TickEvent.Phase.START)) {
-            CadmusClient.clientTick();
+            CadmusClient.onClientTick();
         }
+    }
+
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        CadmusClient.onPlayerLoggedOut();
     }
 
     public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {

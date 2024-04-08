@@ -1,31 +1,37 @@
 package earth.terrarium.cadmus.common.constants;
 
 import com.teamresourceful.resourcefullib.common.utils.CommonUtils;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 
 public class ConstantComponents {
-    public static final Component TITLE = Component.translatable("gui.cadmus.claim_map.title");
-    public static final Component LOADING = Component.translatable("gui.cadmus.claim_map.loading");
-    public static final Component CLOSE = Component.translatable("gui.cadmus.claim_map.close");
-    public static final Component CLEAR_CLAIMED_CHUNKS = Component.translatable("tooltip.cadmus.claim_map.clear_claimed_chunks");
-    public static final Component CLEAR_ALL_CLAIMED_CHUNKS = Component.translatable("tooltip.cadmus.claim_map.clear_all_claimed_chunks");
-    public static final Component CHUNK_LOADED = Component.translatable("tooltip.cadmus.claim_map.chunk_loaded").withStyle(Style.EMPTY.withColor(0xfff59a22).withItalic(true));
-    public static final Component ADMIN_CLAIM = Component.translatable("tooltip.cadmus.claim_map.admin_claim").withStyle(Style.EMPTY.withColor(0xfff59a22).withItalic(true));
-    public static final Component WILDERNESS = CommonUtils.serverTranslatable("message.cadmus.wilderness");
 
+    public static final Component UNKNOWN = Component.literal("Unknown");
+
+    public static final Component PROJECT_ODYSSEY_CATEGORY = Component.translatable("key.categories.project_odyssey");
     public static final Component OPEN_CLAIM_MAP_KEY = Component.translatable("key.cadmus.open_claim_map");
-    public static final Component ODYSSEY_CATEGORY = Component.translatable("key.categories.project_odyssey");
+
+    public static final Component CHUNK_LOADED_TRUE = CommonUtils.serverTranslatable("command.cadmus.info.chunk_loaded_true");
+    public static final Component CHUNK_LOADED_FALSE = CommonUtils.serverTranslatable("command.cadmus.info.chunk_loaded_false");
+
+    public static final Component NOT_CLAIMED = CommonUtils.serverTranslatable("command.cadmus.exception.not_claimed").copy().withStyle(ChatFormatting.RED);
+    public static final Component NOT_OWNER = CommonUtils.serverTranslatable("command.cadmus.exception.not_owner").copy().withStyle(ChatFormatting.RED);
+
+    public static final Component INVALID_STATE = CommonUtils.serverTranslatable("command.cadmus.exception.invalid_state");
+    public static final Component BLOCK_NOT_ADDED = CommonUtils.serverTranslatable("command.cadmus.exception.block_not_added");
+
+    public static final Component NO_PERMISSION_TEAM = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_team");
+    public static final Component NO_PERMISSION_ROLE = CommonUtils.serverTranslatable("command.cadmus.exception.no_permission_role");
+
+    public static final Component TEAM_DOES_NOT_EXIST = CommonUtils.serverTranslatable("command.cadmus.exception.team_does_not_exist");
+
+    public static final Component ADMIN_TEAM_ALREADY_EXISTS = CommonUtils.serverTranslatable("command.cadmus.exception.admin_team_already_exists");
+    public static final Component ADMIN_TEAM_DOES_NOT_EXIST = CommonUtils.serverTranslatable("command.cadmus.exception.admin_team_does_not_exist");
+    public static final Component ADMIN_TEAM_HAS_NO_FLAGS = CommonUtils.serverTranslatable("command.cadmus.exception.admin_team_has_no_flags");
+
+    public static final Component WILDERNESS = CommonUtils.serverTranslatable("message.cadmus.wilderness").copy().withStyle(ChatFormatting.GREEN);
 
     public static final Component CADMUS_TITLE = Component.translatable("cadmus.options.cadmus_options.title");
     public static final Component CLAIMS_MAX = Component.translatable("cadmus.options.cadmus_options.max_claims");
     public static final Component CHUNK_LOADED_MAX = Component.translatable("cadmus.options.cadmus_options.max_loaded_chunks");
-
-    public static final Component UNCLAIMED = CommonUtils.serverTranslatable("text.cadmus.info.unclaimed");
-    public static final Component TEAM = CommonUtils.serverTranslatable("text.cadmus.info.team");
-    public static final Component PLAYER = CommonUtils.serverTranslatable("text.cadmus.info.player");
-    public static final Component ADMIN = CommonUtils.serverTranslatable("text.cadmus.info.admin");
-    public static final Component UNKNOWN = CommonUtils.serverTranslatable("text.cadmus.info.unknown");
-
-    public static final Component INVALID_STATE = CommonUtils.serverTranslatable("command.cadmus.settings.invalid_state");
 }

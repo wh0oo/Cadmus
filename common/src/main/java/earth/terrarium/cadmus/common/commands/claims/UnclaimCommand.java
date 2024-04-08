@@ -1,59 +1,71 @@
 package earth.terrarium.cadmus.common.commands.claims;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.datafixers.util.Pair;
-import com.teamresourceful.resourcefullib.common.utils.CommonUtils;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
-import earth.terrarium.cadmus.common.claims.ClaimHandler;
-import earth.terrarium.cadmus.common.claims.ClaimType;
-import earth.terrarium.cadmus.common.teams.TeamHelper;
-import earth.terrarium.cadmus.common.util.ModUtils;
+import earth.terrarium.cadmus.common.constants.ConstantComponents;
+import earth.terrarium.cadmus.common.utils.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
 public class UnclaimCommand {
+
+    public static final SimpleCommandExceptionType NOT_CLAIMED = new SimpleCommandExceptionType(ConstantComponents.NOT_CLAIMED);
+    private static final SimpleCommandExceptionType NOT_OWNER = new SimpleCommandExceptionType(ConstantComponents.NOT_OWNER);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("unclaim")
             .then(Commands.literal("all")
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
-                    CommandHelper.runAction(() -> clear(player));
+                    unclaimAll(player);
                     return 1;
                 }))
             .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
-                    ColumnPos pos = ColumnPosArgument.getColumnPos(context, "pos");
-                    CommandHelper.runAction(() -> unclaim(player, pos.toChunkPos()));
+                    ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
+                    unclaim(player, pos);
                     return 1;
                 }))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
-                CommandHelper.runAction(() -> unclaim(player, player.chunkPosition()));
+                unclaim(player, player.chunkPosition());
                 return 1;
-            }));
+            })
+        );
     }
 
-    public static void unclaim(ServerPlayer player, ChunkPos pos) throws ClaimException {
-        Pair<String, ClaimType> claimData = ClaimHandler.getClaim(player.serverLevel(), pos);
-        if (claimData == null) throw ClaimException.CHUNK_NOT_CLAIMED;
-        boolean isMember = TeamHelper.isMember(claimData.getFirst(), player.server, player.getUUID());
-        if (!isMember) throw ClaimException.DONT_OWN_CHUNK;
-        if (ModUtils.isAdmin(claimData.getFirst())) throw ClaimException.CANT_UNLCLAIM_ADMIN;
-        ClaimApi.API.unclaim(player.serverLevel(), pos, player);
-        player.displayClientMessage(CommonUtils.serverTranslatable("text.cadmus.unclaiming.unclaimed_chunk_at", pos.x, pos.z), false);
+    private static void unclaim(ServerPlayer player, ChunkPos pos) throws CommandSyntaxException {
+        var claim = ClaimApi.API.getClaim(player.serverLevel(), pos);
+        if (claim.isEmpty()) throw NOT_CLAIMED.create();
+        else {
+            var claims = ClaimApi.API.getOwnedClaims(player).orElse(null);
+            if (claims == null || !claims.containsKey(pos)) throw NOT_OWNER.create();
+        }
+
+        ClaimApi.API.unclaim(player, pos);
+
+        int claimsCount = ClaimCommand.getClaimsCount(player, false);
+        int maxClaims = ClaimApi.API.getMaxClaims(player);
+        player.displayClientMessage(ModUtils.translatableWithStyle(
+            "command.cadmus.info.unclaimed_chunk_at",
+            pos.x, pos.z,
+            claimsCount, maxClaims
+        ), false);
     }
 
-    public static void clear(ServerPlayer player) {
-        String id = TeamHelper.getTeamId(player.getServer(), player.getUUID());
-        player.server.getAllLevels().forEach(l -> ClaimHandler.clear(l, id));
-        Component name = TeamHelper.getTeamName(id, player.server);
-        player.displayClientMessage(CommonUtils.serverTranslatable("text.cadmus.clear", name == null ? player.getDisplayName().getString() : name.getString()), false);
+    private static void unclaimAll(ServerPlayer player) {
+        int oldClaimsCount = ClaimCommand.getClaimsCount(player, false);
+        ClaimApi.API.clear(player);
+        int diff = oldClaimsCount - ClaimCommand.getClaimsCount(player, false);
+        player.displayClientMessage(ModUtils.translatableWithStyle(
+            "command.cadmus.info.unclaimed_all",
+            diff
+        ), false);
     }
 }

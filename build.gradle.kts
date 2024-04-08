@@ -8,7 +8,7 @@ plugins {
     java
     id("maven-publish")
     id("com.teamresourceful.resourcefulgradle") version "0.0.+"
-    id("dev.architectury.loom") version "1.5-SNAPSHOT" apply false
+    id("dev.architectury.loom") version "1.6-SNAPSHOT" apply false
     id("architectury-plugin") version "3.4-SNAPSHOT"
     id("com.github.johnrengelman.shadow") version "7.1.2" apply false
 }
@@ -42,6 +42,17 @@ subprojects {
         mavenLocal()
         maven(url = "https://maven.teamresourceful.com/repository/maven-public/")
         maven(url = "https://maven.neoforged.net/releases/")
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Modrinth"
+                    url = uri("https://api.modrinth.com/maven")
+                }
+            }
+            filter {
+                includeGroup("maven.modrinth")
+            }
+        }
     }
 
     dependencies {
@@ -61,8 +72,8 @@ subprojects {
             parchment(create(group = "org.parchmentmc.data", name = "parchment-1.20.3", version = parchmentVersion))
         })
 
-        "modApi"(group = "com.teamresourceful.resourcefullib", name = "resourcefullib-$modLoader-$minecraftVersion", version = resourcefulLibVersion)
-        val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-1.20.4", version = "latest.release") {
+        "modApi"(group = "com.teamresourceful.resourcefullib", name = "resourcefullib-$modLoader-$minecraftVersion", version = "latest.release")
+        val olympus = "modImplementation"(group = "earth.terrarium.olympus", name = "olympus-$modLoader-$minecraftVersion", version = "latest.release") {
             isTransitive = false
         }
 
@@ -93,6 +104,13 @@ subprojects {
 
     tasks.named<RemapJarTask>("remapJar") {
         archiveClassifier.set(null as String?)
+    }
+
+    tasks.processResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        filesMatching(listOf("META-INF/mods.toml", "fabric.mod.json")) {
+            expand("version" to project.version)
+        }
     }
 
     if (!isCommon) {

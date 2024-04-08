@@ -14,10 +14,10 @@ public record CadmusOptions(int maxClaims, int maxChunkLoaded) implements RoleOp
         new ResourceLocation(Prometheus.MOD_ID, Cadmus.MOD_ID),
         1,
         RecordCodecBuilder.create(instance -> instance.group(
-            Codec.INT.fieldOf("maxClaims").orElse(1089).forGetter(CadmusOptions::maxClaims),
-            Codec.INT.fieldOf("maxChunkLoaded").orElse(64).forGetter(CadmusOptions::maxChunkLoaded)
+            Codec.INT.fieldOf("maxClaims").orElse(Cadmus.DEFAULT_MAX_CLAIMS).forGetter(CadmusOptions::maxClaims),
+            Codec.INT.fieldOf("maxChunkLoaded").orElse(Cadmus.DEFAULT_MAX_CHUNK_LOADED_CLAIMS).forGetter(CadmusOptions::maxChunkLoaded)
         ).apply(instance, CadmusOptions::new)),
-        new CadmusOptions(1089, 64)
+        new CadmusOptions(Cadmus.DEFAULT_MAX_CLAIMS, Cadmus.DEFAULT_MAX_CHUNK_LOADED_CLAIMS)
     );
 
     @Override
