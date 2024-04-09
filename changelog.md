@@ -15,6 +15,7 @@
 - Improved claim screen performance.
 - Claiming on the claim screen now instantly updates, rather than only updating when closing the screen.
 - Claiming can now be done using a selection box in the claim map.
+- Claims on the claim map will now always show the team color.
 
 ## API Changes
 

@@ -37,4 +37,5 @@ public class ConstantComponents {
     public static final Component CLOSE = Component.translatable("gui.cadmus.claim_map.close");
     public static final Component MAX_CLAIMS = Component.translatable("gui.cadmus.claim_map.max_claims");
     public static final Component MAX_CHUNK_LOADED_CLAIMS = Component.translatable("gui.cadmus.claim_map.max_chunk_loaded_claims");
+    public static final Component LOADING = Component.translatable("gui.cadmus.claim_map.loading");
 }

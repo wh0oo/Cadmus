@@ -2,12 +2,13 @@ package earth.terrarium.cadmus.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import earth.terrarium.cadmus.Cadmus;
-import earth.terrarium.cadmus.client.claimmap.ClaimScreen;
+import earth.terrarium.cadmus.client.claimmap.ClaimMapScreen;
 import earth.terrarium.cadmus.client.compat.prometheus.PrometheusClientCompat;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
+import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
-import earth.terrarium.cadmus.common.network.packets.ServerboundSendSilentChatCommandPacket;
+import earth.terrarium.cadmus.common.network.packets.ServerboundSendClaimChatCommandPacket;
 import it.unimi.dsi.fastutil.objects.ObjectCharPair;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -46,12 +47,13 @@ public class CadmusClient {
     }
 
     public static void openClaimMap() {
-        Minecraft.getInstance().setScreen(new ClaimScreen());
+        Minecraft.getInstance().setScreen(new ClaimMapScreen());
     }
 
     public static void onEnterSection() {
-        if (Minecraft.getInstance().screen instanceof ClaimScreen screen) {
+        if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {
             screen.refresh();
+            screen.calculatePixels();
         }
     }
 
@@ -60,7 +62,7 @@ public class CadmusClient {
         return Objects.requireNonNull(Minecraft.getInstance().level);
     }
 
-    public static void sendSilentCommand(String command) {
-        NetworkHandler.CHANNEL.sendToServer(new ServerboundSendSilentChatCommandPacket(command));
+    public static void sendClaimCommand(ClaimCommandType type, String command) {
+        NetworkHandler.CHANNEL.sendToServer(new ServerboundSendClaimChatCommandPacket(type, command));
     }
 }

@@ -1,5 +1,7 @@
 package earth.terrarium.cadmus.client.claimmap;
 
+import com.mojang.math.Axis;
+import com.teamresourceful.resourcefullib.client.CloseablePoseStack;
 import com.teamresourceful.resourcefullib.client.screens.BaseCursorScreen;
 import com.teamresourceful.resourcefullib.client.utils.ScreenUtils;
 import earth.terrarium.cadmus.Cadmus;
@@ -10,6 +12,7 @@ import earth.terrarium.cadmus.api.events.CadmusEvents;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.client.CadmusClient;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
+import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.ChatFormatting;
@@ -25,15 +28,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-public class ClaimScreen extends BaseCursorScreen {
+public class ClaimMapScreen extends BaseCursorScreen {
 
     public static final ResourceLocation TEXTURE = new ResourceLocation(Cadmus.MOD_ID, "textures/gui/map.png");
+    public static final ResourceLocation MAP_ICONS = new ResourceLocation("textures/map/map_icons.png");
     public static final int TEXTURE_WIDTH = 216;
     public static final int TEXTURE_HEIGHT = 237;
     public static final int MAP_SIZE = 200;
@@ -52,12 +58,19 @@ public class ClaimScreen extends BaseCursorScreen {
     private final LocalPlayer player = Objects.requireNonNull(Minecraft.getInstance().player);
     private final ClientLevel level = player.clientLevel;
 
+    private boolean initializedMap;
+
+    @Nullable
+    private CompletableFuture<int[][]> future;
+
+    private MapWidget mapWidget;
     private UUID id;
     private ChatFormatting teamColor;
     private int claimedCount;
     private int maxClaims;
     private int chunkLoadedCount;
     private int maxChunkLoaded;
+
     private float chunkScale;
     private float left;
     private float top;
@@ -70,8 +83,20 @@ public class ClaimScreen extends BaseCursorScreen {
     private int selectionEndX;
     private int selectionEndZ;
 
-    public ClaimScreen() {
+    public ClaimMapScreen() {
         super(CommonComponents.EMPTY);
+    }
+
+    public void calculatePixels() {
+        ChunkPos pos = player.chunkPosition();
+        int scale = getMapScale();
+        int minX = pos.getMinBlockX() - scale;
+        int minZ = pos.getMinBlockZ() - scale;
+        int maxX = pos.getMaxBlockX() + scale + 1;
+        int maxZ = pos.getMaxBlockZ() + scale + 1;
+
+        this.future = CompletableFuture.supplyAsync(() -> ClaimMapTopologyAlgorithm.setColors(minX, minZ, maxX, maxZ, player.clientLevel, player));
+        this.future.thenAccept(colors -> this.mapWidget.updateTexture(colors));
     }
 
     public void refresh() {
@@ -82,11 +107,11 @@ public class ClaimScreen extends BaseCursorScreen {
         this.chunkLoadedCount = ClaimCommand.getClaimsCount(player, true);
         this.maxChunkLoaded = ClaimLimitApi.API.getMaxChunkLoadedClaims(player);
 
-        float renderDistanceScale = getScaledRenderDistance();
+        int renderDistanceScale = this.getScaledRenderDistance();
         this.chunkScale = renderDistanceScale / 16f;
         this.left = (this.width - MAP_SIZE) / 2f;
         this.top = (this.height - MAP_SIZE) / 2f;
-        this.pixelScale = MAP_SIZE / renderDistanceScale * 16;
+        this.pixelScale = (float) MAP_SIZE / renderDistanceScale * 16;
         this.playerChunkX = Math.round(player.chunkPosition().x - chunkScale / 2);
         this.playerChunkZ = Math.round(player.chunkPosition().z - chunkScale / 2);
 
@@ -95,8 +120,6 @@ public class ClaimScreen extends BaseCursorScreen {
 
     @Override
     protected void init() {
-        this.refresh();
-
         int x = (this.width - TEXTURE_WIDTH) / 2;
         int y = (this.height - TEXTURE_HEIGHT) / 2;
 
@@ -105,6 +128,13 @@ public class ClaimScreen extends BaseCursorScreen {
 
         this.addRenderableWidget(new ImageButton(x + TEXTURE_WIDTH - 11 - 7, y + 6, 11, 11, X_BUTTON_SPRITES, button -> onClose()))
             .setTooltip(Tooltip.create(ConstantComponents.CLOSE));
+
+        this.refresh();
+        this.mapWidget = addRenderableWidget(new MapWidget((int) this.left, (int) this.top, MAP_SIZE, MAP_SIZE, this.getMapScale() * 2 + 16));
+        if (!this.initializedMap) {
+            this.calculatePixels();
+            this.initializedMap = true;
+        }
     }
 
     @Override
@@ -113,6 +143,14 @@ public class ClaimScreen extends BaseCursorScreen {
         int top = (this.height - TEXTURE_HEIGHT) / 2;
         graphics.drawString(font, ConstantComponents.MAP_TITLE, (width - font.width(ConstantComponents.MAP_TITLE)) / 2, top + 7, 0x2a262b, false);
         drawClaimLabels(graphics, mouseX, mouseY);
+
+        if (this.selectionStartX == 0 && this.selectionStartZ == 0) {
+            drawHover(graphics, mouseX, mouseY);
+        } else {
+            drawSelection(graphics);
+        }
+        drawClaims(graphics, mouseX, mouseY);
+        renderPlayerAvatar(graphics);
     }
 
     private void drawClaimLabels(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -138,17 +176,20 @@ public class ClaimScreen extends BaseCursorScreen {
         int left = (this.width - TEXTURE_WIDTH) / 2;
         int top = (this.height - TEXTURE_HEIGHT) / 2 + 1;
         graphics.blit(TEXTURE, left, top, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-        if (this.selectionStartX == 0 && this.selectionStartZ == 0) {
-            drawHover(graphics, mouseX, mouseY);
-        } else {
-            drawSelection(graphics);
-        }
-        drawClaims(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public void onClose() {
+        this.mapWidget.close();
+        if (this.future != null && !this.future.isDone()) {
+            this.future.cancel(false); // Don't attempt to modify the texture if the screen is closed
+        }
+        super.onClose();
     }
 
     @Override
@@ -295,19 +336,40 @@ public class ClaimScreen extends BaseCursorScreen {
 
         int borderColor = (color & 0x00FFFFFF) | 0xFF000000;
 
-        if (north) graphics.fill(roundedX, roundedY, roundedWidth, roundedY + 1, borderColor);
-        else if (northEast) graphics.fill(roundedWidth - 1, roundedY, roundedWidth, roundedY + 1, borderColor);
+        if (north) graphics.fill(roundedX, roundedY, roundedWidth, roundedY + 1, 2, borderColor);
+        else if (northEast) graphics.fill(roundedWidth - 1, roundedY, roundedWidth, roundedY + 1, 2, borderColor);
 
-        if (east) graphics.fill(roundedWidth - 1, roundedY, roundedWidth, roundedHeight, borderColor);
-        else if (southEast) graphics.fill(roundedWidth - 1, roundedHeight - 1, roundedWidth, roundedHeight, borderColor);
+        if (east) graphics.fill(roundedWidth - 1, roundedY, roundedWidth, roundedHeight, 2, borderColor);
+        else if (southEast) graphics.fill(roundedWidth - 1, roundedHeight - 1, roundedWidth, roundedHeight, 2, borderColor);
 
-        if (south) graphics.fill(roundedX, roundedHeight - 1, roundedWidth, roundedHeight, borderColor);
-        else if (southWest) graphics.fill(roundedX, roundedHeight - 1, roundedX + 1, roundedHeight, borderColor);
+        if (south) graphics.fill(roundedX, roundedHeight - 1, roundedWidth, roundedHeight, 2, borderColor);
+        else if (southWest) graphics.fill(roundedX, roundedHeight - 1, roundedX + 1, roundedHeight, 2, borderColor);
 
-        if (west) graphics.fill(roundedX, roundedY, roundedX + 1, roundedHeight, borderColor);
-        else if (northWest) graphics.fill(roundedX, roundedY, roundedX + 1, roundedY + 1, borderColor);
+        if (west) graphics.fill(roundedX, roundedY, roundedX + 1, roundedHeight, 2, borderColor);
+        else if (northWest) graphics.fill(roundedX, roundedY, roundedX + 1, roundedY + 1, 2, borderColor);
 
-        graphics.fill(roundedX, roundedY, roundedWidth, roundedHeight, color & 0x33ffffff);
+        graphics.fill(roundedX, roundedY, roundedWidth, roundedHeight, 2, color & 0x33ffffff);
+    }
+
+    private void renderPlayerAvatar(GuiGraphics graphics) {
+        float left = (this.width) / 2f;
+        float top = (this.height) / 2f;
+
+        double playerX = player.getX();
+        double playerZ = player.getZ();
+        double x = (playerX % 16) + (playerX >= 0 ? -8 : 8);
+        double y = (playerZ % 16) + (playerZ >= 0 ? -8 : 8);
+
+        float scale = MAP_SIZE / (getMapScale() * 2f + 16);
+
+        x *= scale;
+        y *= scale;
+        try (var pose = new CloseablePoseStack(graphics)) {
+            pose.translate(left + x, top + y, 0);
+            pose.mulPose(Axis.ZP.rotationDegrees(player.getYRot()));
+            pose.translate(-4, -4, 2);
+            graphics.blit(MAP_ICONS, 0, 0, 40, 0, 8, 8, 128, 128);
+        }
     }
 
     private void doAction(int startX, int endX, int startZ, int endZ, int button) {
@@ -361,30 +423,35 @@ public class ClaimScreen extends BaseCursorScreen {
         return scale - (scale % 16) + 16;
     }
 
+    public int getMapScale() {
+        int scale = Minecraft.getInstance().options.renderDistance().get() * 8;
+        return scale - scale % 16 + 16;
+    }
+
 
     private void claim(ChunkPos pos, boolean chunkLoad) {
-        CadmusClient.sendSilentCommand("claim %s %s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ(), chunkLoad));
+        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM, "%s %s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ(), chunkLoad));
     }
 
     private void unclaim(ChunkPos pos) {
-        CadmusClient.sendSilentCommand("unclaim %s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ()));
+        CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM, "%s %s".formatted(pos.getMaxBlockX(), pos.getMaxBlockZ()));
     }
 
     private void claimArea(ChunkPos startPos, ChunkPos endPos, boolean chunkLoad) {
-        CadmusClient.sendSilentCommand("claim area %s %s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ(), chunkLoad));
+        CadmusClient.sendClaimCommand(ClaimCommandType.CLAIM_AREA, "%s %s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ(), chunkLoad));
     }
 
     private void unclaimArea(ChunkPos startPos, ChunkPos endPos) {
-        CadmusClient.sendSilentCommand("unclaim area %s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ()));
+        CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM_AREA, "%s %s %s %s".formatted(startPos.getMaxBlockX(), startPos.getMaxBlockZ(), endPos.getMaxBlockX(), endPos.getMaxBlockZ()));
     }
 
     private void unclaimAll() {
-        CadmusClient.sendSilentCommand("unclaim all");
+        CadmusClient.sendClaimCommand(ClaimCommandType.UNCLAIM_ALL, "");
     }
 
     private static void update() {
         if (!Minecraft.getInstance().isSameThread()) return;
-        if (Minecraft.getInstance().screen instanceof ClaimScreen screen) {
+        if (Minecraft.getInstance().screen instanceof ClaimMapScreen screen) {
             screen.refresh();
         }
     }

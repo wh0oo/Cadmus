@@ -114,5 +114,6 @@
   "gui.cadmus.claim_map.clear_claimed_chunks": "Clear Claimed Chunks",
   "gui.cadmus.claim_map.close": "Close",
   "gui.cadmus.claim_map.max_claims": "Max Claims",
-  "gui.cadmus.claim_map.max_chunk_loaded_claims": "Max Chunk Loaded Claims"
+  "gui.cadmus.claim_map.max_chunk_loaded_claims": "Max Chunk Loaded Claims",
+  "gui.cadmus.claim_map.loading": "Loading..."
 }
