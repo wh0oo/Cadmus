@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
@@ -25,10 +26,9 @@ public class UnclaimAreaCommand {
                 .then(Commands.argument("startPos", ColumnPosArgument.columnPos())
                     .then(Commands.argument("endPos", ColumnPosArgument.columnPos())
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             ChunkPos startPos = ColumnPosArgument.getColumnPos(context, "startPos").toChunkPos();
                             ChunkPos endPos = ColumnPosArgument.getColumnPos(context, "endPos").toChunkPos();
-                            unclaim(player, startPos, endPos);
+                            unclaim(context.getSource(), startPos, endPos);
                             return 1;
                         })
                     )
@@ -37,7 +37,8 @@ public class UnclaimAreaCommand {
         );
     }
 
-    private static void unclaim(ServerPlayer player, ChunkPos startPos, ChunkPos endPos) throws CommandSyntaxException {
+    private static void unclaim(CommandSourceStack source, ChunkPos startPos, ChunkPos endPos) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
         int dist = startPos.getChessboardDistance(endPos);
         if (dist > 50) {
             throw new SimpleCommandExceptionType(ModUtils.translatableWithStyle(
@@ -51,7 +52,7 @@ public class UnclaimAreaCommand {
 
         UUID id = TeamApi.API.getId(player);
         positions.forEach(pos ->
-            ClaimApi.API.getClaim(player.level(), pos).ifPresent(claim -> {
+            ClaimApi.API.getClaim(source.getLevel(), pos).ifPresent(claim -> {
                 if (claim.left().equals(id)) {
                     finalPositions.add(pos);
                 }
@@ -61,8 +62,8 @@ public class UnclaimAreaCommand {
         ClaimApi.API.unclaim(player, finalPositions);
 
         int claimsCount = ClaimCommand.getClaimsCount(player, false);
-        int maxClaims = ClaimApi.API.getMaxClaims(player);
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        int maxClaims = ClaimLimitApi.API.getMaxClaims(player);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             "command.cadmus.info.unclaimed_chunks_area",
             startPos.x, startPos.z,
             endPos.x, endPos.z,

@@ -43,23 +43,31 @@ public class ClaimSettingsCommand {
                                 ServerPlayer player = context.getSource().getPlayerOrException();
                                 checkPermissions(player, ProtectionApi.API.getProtection(setting));
                                 String value = StringArgumentType.getString(context, "value");
-                                TriState state = stringToState(value);
-
-                                CadmusSaveData.setClaimSetting(player.server, TeamApi.API.getId(player), setting, state);
-                                player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.set", setting, value), false);
+                                set(context.getSource(), setting, value);
                                 return 1;
                             })
                         )
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
-                            TriState state = CadmusSaveData.getClaimSetting(player.server, TeamApi.API.getId(player), setting);
-                            player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.get", setting, stateToString(state)), false);
+                            get(context.getSource(), setting);
                             return 1;
                         })
                     )
                 )
             )
         );
+    }
+
+    private static void set(CommandSourceStack source, String setting, String value) throws CommandSyntaxException {
+        TriState state = stringToState(value);
+        ServerPlayer player = source.getPlayerOrException();
+        CadmusSaveData.setClaimSetting(source.getServer(), TeamApi.API.getId(player), setting, state);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.set", setting, value), false);
+    }
+
+    private static void get(CommandSourceStack source, String setting) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        TriState state = CadmusSaveData.getClaimSetting(source.getServer(), TeamApi.API.getId(player), setting);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.get", setting, stateToString(state)), false);
     }
 
     private static TriState stringToState(String input) throws CommandSyntaxException {

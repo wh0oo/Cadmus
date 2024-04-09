@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
@@ -29,18 +30,16 @@ public class ClaimShapeCommand {
                     .then(Commands.argument("radius", IntegerArgumentType.integer(1, 10))
                         .then(Commands.argument("chunkload", BoolArgumentType.bool())
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 int sides = IntegerArgumentType.getInteger(context, "sides");
                                 int radius = IntegerArgumentType.getInteger(context, "radius");
                                 boolean chunkload = BoolArgumentType.getBool(context, "chunkload");
-                                claim(player, sides, radius, chunkload);
+                                claim(context.getSource(), sides, radius, chunkload);
                                 return 1;
                             }))
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             int sides = IntegerArgumentType.getInteger(context, "sides");
                             int radius = IntegerArgumentType.getInteger(context, "radius");
-                            claim(player, sides, radius, false);
+                            claim(context.getSource(), sides, radius, false);
                             return 1;
                         })
                     )
@@ -49,7 +48,8 @@ public class ClaimShapeCommand {
         );
     }
 
-    private static void claim(ServerPlayer player, int sides, int radius, boolean chunkload) throws CommandSyntaxException {
+    private static void claim(CommandSourceStack source, int sides, int radius, boolean chunkload) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
         BlockPos centerBlock = player.blockPosition();
 
         List<BlockPos> vertices = new ArrayList<>();
@@ -88,13 +88,13 @@ public class ClaimShapeCommand {
 
         Object2BooleanMap<ChunkPos> finalPositions = new Object2BooleanOpenHashMap<>();
         chunksToClaim.forEach(pos -> {
-            if (!ClaimApi.API.isClaimed(player.serverLevel(), pos)) {
+            if (!ClaimApi.API.isClaimed(source.getLevel(), pos)) {
                 finalPositions.put(pos, chunkload);
             }
         });
 
         int claimsCount = ClaimCommand.getClaimsCount(player, chunkload) + finalPositions.size();
-        int maxClaims = chunkload ? ClaimApi.API.getMaxChunkLoadedClaims(player) : ClaimApi.API.getMaxClaims(player);
+        int maxClaims = chunkload ? ClaimLimitApi.API.getMaxChunkLoadedClaims(player) : ClaimLimitApi.API.getMaxClaims(player);
         if (claimsCount >= maxClaims) {
             throw new SimpleCommandExceptionType(ModUtils.translatableWithStyle(
                 "command.cadmus.exception.not_enough_claims",
@@ -106,13 +106,12 @@ public class ClaimShapeCommand {
             ClaimApi.API.claim(player, finalPositions);
         }
 
-        claimsCount = ClaimCommand.getClaimsCount(player, chunkload);
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             chunkload ?
                 "command.cadmus.info.chunk_loaded_chunks" :
                 "command.cadmus.info.claimed_chunks",
             finalPositions.size(),
-            claimsCount, maxClaims
+            ClaimCommand.getClaimsCount(player, chunkload), maxClaims
         ), false);
     }
 

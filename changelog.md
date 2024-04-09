@@ -12,6 +12,9 @@
   - Fire spreading into them.
 - Added Xaero's mod compat with claim support. Thank you Abbie5 for their initial work on this!
 - Admin claim tool commands now display the name of the team in a tooltip when suggesting the team's UUID.
+- Improved claim screen performance.
+- Claiming on the claim screen now instantly updates, rather than only updating when closing the screen.
+- Claiming can now be done using a selection box in the claim map.
 
 ## API Changes
 

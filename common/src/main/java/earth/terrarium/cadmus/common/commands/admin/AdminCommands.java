@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.common.commands.claims.ClaimCommand;
 import earth.terrarium.cadmus.common.commands.claims.UnclaimCommand;
@@ -28,7 +29,7 @@ public class AdminCommands {
     public static final SuggestionProvider<CommandSourceStack> TEAM_SUGGESTION_PROVIDER = (context, builder) -> {
         ServerPlayer player = context.getSource().getPlayerOrException();
         return SharedSuggestionProvider.suggest(
-            ClaimApi.API.getAllClaimsByOwner(player.serverLevel()).keySet(),
+            TeamApi.API.getAllTeams(player.getServer()),
             builder,
             UUID::toString,
             id -> TeamApi.API.getName(player.getServer(), id)
@@ -45,24 +46,21 @@ public class AdminCommands {
                         .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                             .then(Commands.argument("chunkload", BoolArgumentType.bool())
                                 .executes(context -> {
-                                    ServerPlayer player = context.getSource().getPlayerOrException();
                                     ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
                                     boolean chunkload = BoolArgumentType.getBool(context, "chunkload");
                                     UUID id = UuidArgument.getUuid(context, "id");
-                                    claim(player, pos, chunkload, id);
+                                    claim(context.getSource(), pos, chunkload, id);
                                     return 1;
                                 }))
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
                                 UUID id = UuidArgument.getUuid(context, "id");
-                                claim(player, pos, false, id);
+                                claim(context.getSource(), pos, false, id);
                                 return 1;
                             }))
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             UUID id = UuidArgument.getUuid(context, "id");
-                            claim(player, player.chunkPosition(), false, id);
+                            claim(context.getSource(), context.getSource().getPlayerOrException().chunkPosition(), false, id);
                             return 1;
                         })
                     )
@@ -73,10 +71,9 @@ public class AdminCommands {
                         .suggests(TEAM_SUGGESTION_PROVIDER)
                         .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
                                 UUID id = UuidArgument.getUuid(context, "id");
-                                unclaim(player, pos, id);
+                                unclaim(context.getSource(), pos, id);
                                 return 1;
                             })
                         )
@@ -84,13 +81,12 @@ public class AdminCommands {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             ChunkPos pos = player.chunkPosition();
                             UUID id = UuidArgument.getUuid(context, "id");
-                            unclaim(player, pos, id);
+                            unclaim(context.getSource(), pos, id);
                             return 1;
                         })
                     )
                     .executes(context -> {
-                        ServerPlayer player = context.getSource().getPlayerOrException();
-                        unclaim(player);
+                        unclaim(context.getSource());
                         return 1;
                     })
                 )
@@ -98,17 +94,15 @@ public class AdminCommands {
                     .then(Commands.argument("id", UuidArgument.uuid())
                         .suggests(TEAM_SUGGESTION_PROVIDER)
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             UUID id = UuidArgument.getUuid(context, "id");
-                            unclaimAll(player, id);
+                            unclaimAll(context.getSource(), id);
                             return 1;
                         })
                     )
                 )
                 .then(Commands.literal("clearall")
                     .executes(context -> {
-                        ServerPlayer player = context.getSource().getPlayerOrException();
-                        clearAll(player);
+                        clearAll(context.getSource());
                         return 1;
                     })
                 )
@@ -116,16 +110,16 @@ public class AdminCommands {
         );
     }
 
-    private static void claim(ServerPlayer player, ChunkPos pos, boolean chunkload, UUID id) throws CommandSyntaxException {
-        if (!ClaimApi.API.teamExists(player.serverLevel(), id)) throw TEAM_DOES_NOT_EXIST.create();
-        ClaimCommand.checkClaimed(player.serverLevel(), pos);
+    private static void claim(CommandSourceStack source, ChunkPos pos, boolean chunkload, UUID id) throws CommandSyntaxException {
+        if (!TeamApi.API.teamExists(source.getServer(), id)) throw TEAM_DOES_NOT_EXIST.create();
+        ClaimCommand.checkClaimed(source.getLevel(), pos);
 
-        ClaimApi.API.claim(player.level(), id, pos, chunkload);
+        ClaimApi.API.claim(source.getLevel(), id, pos, chunkload);
 
-        int claimsCount = ClaimCommand.getClaimsCount(player, chunkload);
-        int maxClaims = chunkload ? ClaimApi.API.getMaxChunkLoadedClaims(player) : ClaimApi.API.getMaxClaims(player);
+        int claimsCount = ClaimCommand.getClaimsCount(source.getLevel(), id, chunkload);
+        int maxClaims = chunkload ? ClaimLimitApi.API.getMaxChunkLoadedClaims(id) : ClaimLimitApi.API.getMaxClaims(id);
 
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             chunkload ?
                 "command.cadmus.info.chunk_loaded_chunk_at" :
                 "command.cadmus.info.claimed_chunk_at",
@@ -134,43 +128,44 @@ public class AdminCommands {
         ), false);
     }
 
-    private static void unclaim(ServerPlayer player, ChunkPos pos, UUID id) throws CommandSyntaxException {
-        if (!ClaimApi.API.teamExists(player.serverLevel(), id)) throw TEAM_DOES_NOT_EXIST.create();
+    private static void unclaim(CommandSourceStack source, ChunkPos pos, UUID id) throws CommandSyntaxException {
+        if (!TeamApi.API.teamExists(source.getServer(), id)) throw TEAM_DOES_NOT_EXIST.create();
 
-        var claim = ClaimApi.API.getClaim(player.serverLevel(), pos);
+        var claim = ClaimApi.API.getClaim(source.getLevel(), pos);
         if (claim.isEmpty()) throw UnclaimCommand.NOT_CLAIMED.create();
 
-        ClaimApi.API.unclaim(player.level(), id, pos);
+        ClaimApi.API.unclaim(source.getLevel(), id, pos);
 
-        int claimsCount = ClaimCommand.getClaimsCount(player, false);
-        int maxClaims = ClaimApi.API.getMaxClaims(player);
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        int claimsCount = ClaimCommand.getClaimsCount(source.getLevel(), id, false);
+        int maxClaims = ClaimLimitApi.API.getMaxClaims(id);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             "command.cadmus.info.unclaimed_chunk_at",
             pos.x, pos.z,
             claimsCount, maxClaims
         ), false);
     }
 
-    private static void unclaim(ServerPlayer player) throws CommandSyntaxException {
-        var claim = ClaimApi.API.getClaim(player.serverLevel(), player.chunkPosition());
+    private static void unclaim(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        var claim = ClaimApi.API.getClaim(source.getLevel(), player.chunkPosition());
         if (claim.isEmpty()) throw UnclaimCommand.NOT_CLAIMED.create();
-        unclaim(player, player.chunkPosition(), claim.get().left());
+        unclaim(source, player.chunkPosition(), claim.get().left());
     }
 
-    private static void unclaimAll(ServerPlayer player, UUID id) throws CommandSyntaxException {
-        if (!ClaimApi.API.teamExists(player.serverLevel(), id)) throw TEAM_DOES_NOT_EXIST.create();
+    private static void unclaimAll(CommandSourceStack source, UUID id) throws CommandSyntaxException {
+        if (!TeamApi.API.teamExists(source.getServer(), id)) throw TEAM_DOES_NOT_EXIST.create();
 
-        int oldClaimsCount = ClaimCommand.getClaimsCount(player, false);
-        ClaimApi.API.clear(player.level(), id);
-        int diff = oldClaimsCount - ClaimCommand.getClaimsCount(player, false);
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        int oldClaimsCount = ClaimCommand.getClaimsCount(source.getLevel(), id, false);
+        ClaimApi.API.clear(source.getLevel(), id);
+        int diff = oldClaimsCount - ClaimCommand.getClaimsCount(source.getLevel(), id, false);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             "command.cadmus.info.unclaimed_all",
             diff
         ), false);
     }
 
-    private static void clearAll(ServerPlayer player) {
-        ClaimApi.API.clearAll(player.server);
-        player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.info.admin_clear"), false);
+    private static void clearAll(CommandSourceStack source) {
+        ClaimApi.API.clearAll(source.getServer());
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.info.admin_clear"), false);
     }
 }

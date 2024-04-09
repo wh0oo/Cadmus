@@ -5,10 +5,8 @@ import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
 import earth.terrarium.cadmus.api.flags.FlagApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
-import earth.terrarium.cadmus.common.compat.prometheus.PrometheusCompat;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
 import earth.terrarium.cadmus.common.network.packets.*;
-import earth.terrarium.cadmus.common.utils.CadmusGameRules;
 import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.resources.ResourceKey;
@@ -29,7 +27,7 @@ public class ClaimApiImpl implements ClaimApi {
         }
 
         var data = ClaimSaveData.read(level);
-        data.claims().put(pos, new ObjectBooleanImmutablePair<>(id, chunkLoad));
+        data.claims().put(pos, ObjectBooleanPair.of(id, chunkLoad));
         data.claimsById().computeIfAbsent(id, uuid -> new Object2BooleanOpenHashMap<>()).put(pos, chunkLoad);
 
         if (level instanceof ServerLevel serverLevel) {
@@ -54,7 +52,7 @@ public class ClaimApiImpl implements ClaimApi {
         for (var entry : positions.object2BooleanEntrySet()) {
             ChunkPos pos = entry.getKey();
             boolean chunkLoad = entry.getBooleanValue();
-            data.claims().put(pos, new ObjectBooleanImmutablePair<>(id, chunkLoad));
+            data.claims().put(pos, ObjectBooleanPair.of(id, chunkLoad));
             data.claimsById().computeIfAbsent(id, uuid -> new Object2BooleanOpenHashMap<>()).put(pos, chunkLoad);
         }
 
@@ -201,19 +199,5 @@ public class ClaimApiImpl implements ClaimApi {
     @Override
     public Object2ObjectMap<ChunkPos, ObjectBooleanPair<UUID>> getAllClientClaims(ResourceKey<Level> level) {
         return ClaimSaveData.readClient(level).claims();
-    }
-
-    @Override
-    public int getMaxClaims(ServerLevel level, UUID id) {
-        return Cadmus.IS_PROMETHEUS_LOADED ?
-            PrometheusCompat.getMaxClaims(level, id) :
-            level.getGameRules().getInt(CadmusGameRules.MAX_CLAIMS);
-    }
-
-    @Override
-    public int getMaxChunkLoadedClaims(ServerLevel level, UUID id) {
-        return Cadmus.IS_PROMETHEUS_LOADED ?
-            PrometheusCompat.getMaxChunkLoadedClaims(level, id) :
-            level.getGameRules().getInt(CadmusGameRules.MAX_CHUNK_LOADED_CLAIMS);
     }
 }

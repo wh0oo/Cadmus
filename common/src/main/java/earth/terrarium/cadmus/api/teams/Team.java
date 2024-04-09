@@ -2,6 +2,7 @@ package earth.terrarium.cadmus.api.teams;
 
 import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
+import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface Team {
@@ -68,9 +70,12 @@ public interface Team {
      */
     boolean canModifySettings(Player player);
 
+    Set<UUID> getAllTeams(MinecraftServer server);
+
     default void onCreate(MinecraftServer server, UUID id) {
         CadmusEvents.CreateTeamEvent.fire(server, id);
         TeamApi.API.syncTeamInfo(server, id, true);
+        ClaimLimitApiImpl.API.calculate(server, id, true);
     }
 
     default void onRemove(MinecraftServer server, UUID id) {
@@ -85,9 +90,11 @@ public interface Team {
 
     default void onPlayerAdded(MinecraftServer server, UUID id, @Nullable ServerPlayer player) {
         CadmusEvents.AddPlayerToTeamEvent.fire(server, id, player);
+        ClaimLimitApiImpl.API.calculate(server, id, true);
     }
 
     default void onPlayerRemoved(MinecraftServer server, UUID id, @Nullable ServerPlayer player) {
         CadmusEvents.RemovePlayerFromTeamEvent.fire(server, id, player);
+        ClaimLimitApiImpl.API.calculate(server, id, true);
     }
 }

@@ -30,7 +30,7 @@ public class CadmusOptionsPage implements Page {
 
         maxClaimsBox = UiUtils.addLine(
             layout, 0, width,
-            ConstantComponents.CLAIMS_MAX,
+            ConstantComponents.MAX_CLAIMS,
             (w) -> new IntTextBox(
                 maxClaimsBox,
                 w, 20,
@@ -40,7 +40,7 @@ public class CadmusOptionsPage implements Page {
 
         maxChunkLoaded = UiUtils.addLine(
             layout, 1, width,
-            ConstantComponents.CHUNK_LOADED_MAX,
+            ConstantComponents.MAX_CHUNK_LOADED_CLAIMS,
             (w) -> new IntTextBox(
                 maxChunkLoaded,
                 w, 20,

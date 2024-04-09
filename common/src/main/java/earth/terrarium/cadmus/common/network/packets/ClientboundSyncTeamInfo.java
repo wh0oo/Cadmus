@@ -9,7 +9,7 @@ import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketTyp
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.api.client.events.CadmusClientEvents;
 import earth.terrarium.cadmus.client.CadmusClient;
-import it.unimi.dsi.fastutil.objects.ObjectCharImmutablePair;
+import it.unimi.dsi.fastutil.objects.ObjectCharPair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -49,7 +49,7 @@ public record ClientboundSyncTeamInfo(
         @Override
         public Runnable handle(ClientboundSyncTeamInfo packet) {
             return () -> {
-                CadmusClient.TEAM_INFO.put(packet.id, new ObjectCharImmutablePair<>(packet.name, packet.color));
+                CadmusClient.TEAM_INFO.put(packet.id, ObjectCharPair.of(packet.name, packet.color));
                 Minecraft.getInstance().execute(() ->
                     CadmusClientEvents.UpdateTeamInfo.fire(packet.id, packet.name, ChatFormatting.getByCode(packet.color), packet.updateMaps));
             };

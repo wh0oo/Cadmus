@@ -208,10 +208,6 @@ public interface ClaimApi {
      */
     Object2ObjectMap<UUID, Object2BooleanMap<ChunkPos>> getAllClaimsByOwner(ServerLevel level);
 
-    default boolean teamExists(ServerLevel level, UUID id) {
-        return this.getAllClaimsByOwner(level).containsKey(id);
-    }
-
     /**
      * Gets a claim that has been synced to the client for the given level.
      *
@@ -228,42 +224,4 @@ public interface ClaimApi {
      * @return A map of chunk positions to a pair of claim ID and chunk load status.
      */
     Object2ObjectMap<ChunkPos, ObjectBooleanPair<UUID>> getAllClientClaims(ResourceKey<Level> level);
-
-    /**
-     * Gets the maximum number of claims the team can have.
-     *
-     * @param level The level.
-     * @param id    The team ID.
-     * @return The maximum number of claims the team can have.
-     */
-    int getMaxClaims(ServerLevel level, UUID id);
-
-    /**
-     * Gets the maximum number of chunk loaded claims the team can have.
-     *
-     * @param level The level.
-     * @param id    The team ID.
-     * @return The maximum number of chunk loaded claims the team can have.
-     */
-    int getMaxChunkLoadedClaims(ServerLevel level, UUID id);
-
-    /**
-     * Gets the maximum number of claims the player can have.
-     *
-     * @param player The player to get the claims from.
-     * @return The maximum number of claims the player can have.
-     */
-    default int getMaxClaims(@NotNull ServerPlayer player) {
-        return this.getMaxClaims(player.serverLevel(), TeamApi.API.getId(player));
-    }
-
-    /**
-     * Gets the maximum number of chunk loaded claims the player can have.
-     *
-     * @param player The player to get the claims from.
-     * @return The maximum number of chunk loaded claims the player can have.
-     */
-    default int getMaxChunkLoadedClaims(@NotNull ServerPlayer player) {
-        return this.getMaxChunkLoadedClaims(player.serverLevel(), TeamApi.API.getId(player));
-    }
 }

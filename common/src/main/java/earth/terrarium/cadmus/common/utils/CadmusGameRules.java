@@ -3,19 +3,23 @@ package earth.terrarium.cadmus.common.utils;
 import com.teamresourceful.resourcefullib.common.exceptions.NotImplementedException;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import earth.terrarium.cadmus.Cadmus;
+import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.GameRules;
+
+import java.util.function.BiConsumer;
 
 public class CadmusGameRules {
 
     public static final GameRules.Key<GameRules.IntegerValue> MAX_CLAIMS = register(
         "maxClaims",
         GameRules.Category.MISC,
-        createIntRule(Cadmus.DEFAULT_MAX_CLAIMS));
+        createIntRule(Cadmus.DEFAULT_MAX_CLAIMS, (server, rule) -> ClaimLimitApi.API.calculate(server)));
 
     public static final GameRules.Key<GameRules.IntegerValue> MAX_CHUNK_LOADED_CLAIMS = register(
         "maxChunkLoadedClaims",
         GameRules.Category.MISC,
-        createIntRule(Cadmus.DEFAULT_MAX_CHUNK_LOADED_CLAIMS));
+        createIntRule(Cadmus.DEFAULT_MAX_CHUNK_LOADED_CLAIMS, (server, rule) -> ClaimLimitApi.API.calculate(server)));
 
     public static final GameRules.Key<GameRules.BooleanValue> DO_CLAIMED_BLOCK_BREAKING = register(
         "doClaimedBlockBreaking",
@@ -73,7 +77,17 @@ public class CadmusGameRules {
     }
 
     @ExpectPlatform
+    private static GameRules.Type<GameRules.IntegerValue> createIntRule(int defaultValue, BiConsumer<MinecraftServer, GameRules.IntegerValue> changeListener) {
+        throw new NotImplementedException();
+    }
+
+    @ExpectPlatform
     private static GameRules.Type<GameRules.BooleanValue> createBooleanRule(boolean defaultValue) {
+        throw new NotImplementedException();
+    }
+
+    @ExpectPlatform
+    private static GameRules.Type<GameRules.BooleanValue> createBooleanRule(boolean defaultValue, BiConsumer<MinecraftServer, GameRules.BooleanValue> changeListener) {
         throw new NotImplementedException();
     }
 

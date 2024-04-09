@@ -2,11 +2,13 @@ package earth.terrarium.cadmus.common.compat.prometheus;
 
 import com.mojang.authlib.GameProfile;
 import com.teamresourceful.resourcefullib.common.utils.TriState;
+import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.protections.ProtectionApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.prometheus.api.permissions.PermissionApi;
 import earth.terrarium.prometheus.api.roles.RoleApi;
 import earth.terrarium.prometheus.api.roles.options.RoleOptionsApi;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 
@@ -21,14 +23,17 @@ public class PrometheusCompat {
 
         ProtectionApi.API.getProtections().values().forEach(protection ->
             PermissionApi.API.addDefaultPermission(protection.personalPermission(), TriState.TRUE));
+
+        ClaimLimitApi.API.register(new PrometheusClaimLimiter());
     }
 
     public static boolean hasPermission(Player player, String permission) {
         return PermissionApi.API.getPermission(player, permission).map(false);
     }
 
-    public static int getMaxClaims(ServerLevel level, UUID id) {
-        Optional<Player> player = TeamApi.API.getPlayer(level.getServer(), id);
+    public static int getMaxClaims(MinecraftServer server, UUID id) {
+        ServerLevel level = server.overworld();
+        Optional<Player> player = TeamApi.API.getPlayer(server, id);
         if (player.isPresent()) {
             return RoleApi.API.getNonNullOption(player.get(), CadmusOptions.SERIALIZER).maxClaims();
         }
@@ -40,8 +45,9 @@ public class PrometheusCompat {
         return maxClaims;
     }
 
-    public static int getMaxChunkLoadedClaims(ServerLevel level, UUID id) {
-        Optional<Player> player = TeamApi.API.getPlayer(level.getServer(), id);
+    public static int getMaxChunkLoadedClaims(MinecraftServer server, UUID id) {
+        ServerLevel level = server.overworld();
+        Optional<Player> player = TeamApi.API.getPlayer(server, id);
         if (player.isPresent()) {
             return RoleApi.API.getNonNullOption(player.get(), CadmusOptions.SERIALIZER).maxChunkLoaded();
         }

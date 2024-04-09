@@ -13,6 +13,7 @@ public class NetworkHandler {
     public static final Network CHANNEL = new Network(new ResourceLocation(Cadmus.MOD_ID, "main"), 1, true);
 
     public static void init() {
+        CHANNEL.register(ServerboundSendSilentChatCommandPacket.TYPE);
         CHANNEL.register(ClientboundSyncClaimsPacket.TYPE);
         CHANNEL.register(ClientboundAddClaimPacket.TYPE);
         CHANNEL.register(ClientboundAddClaimsPacket.TYPE);
@@ -21,6 +22,8 @@ public class NetworkHandler {
         CHANNEL.register(ClientboundClearClaimsPacket.TYPE);
         CHANNEL.register(ClientboundSyncTeamInfo.TYPE);
         CHANNEL.register(ClientboundSyncAllTeamInfoPacket.TYPE);
+        CHANNEL.register(ClientboundSyncMaxClaims.TYPE);
+        CHANNEL.register(ClientboundSyncAllMaxClaims.TYPE);
     }
 
     // Sends to all clients that have Cadmus installed

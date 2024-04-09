@@ -2,8 +2,11 @@ package earth.terrarium.cadmus;
 
 import com.teamresourceful.resourcefullib.common.utils.modinfo.ModInfoUtils;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
+import earth.terrarium.cadmus.api.claims.limit.ClaimLimitApi;
 import earth.terrarium.cadmus.api.teams.TeamApi;
 import earth.terrarium.cadmus.client.CadmusClient;
+import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
+import earth.terrarium.cadmus.common.claims.limit.VanillaClaimLimiter;
 import earth.terrarium.cadmus.common.compat.prometheus.PrometheusCompat;
 import earth.terrarium.cadmus.common.flags.Flags;
 import earth.terrarium.cadmus.common.network.NetworkHandler;
@@ -35,6 +38,7 @@ public class Cadmus {
         ClaimSettings.init();
         Flags.init();
         TeamApi.API.register(new VanillaTeam(), 0);
+        ClaimLimitApi.API.register(new VanillaClaimLimiter());
         if (IS_PROMETHEUS_LOADED) PrometheusCompat.init();
     }
 
@@ -49,6 +53,7 @@ public class Cadmus {
         ModUtils.sendJoinPackets(player);
         TeamApi.API.syncAllTeamInfo(player.server);
         TeamApi.API.displayTeamName(player);
+        ClaimLimitApiImpl.API.calculate(player.server, player.getUUID(), true);
     }
 
     public static void onServerStarted(MinecraftServer server) {
@@ -61,5 +66,6 @@ public class Cadmus {
                 }
             })
         );
+        ClaimLimitApi.API.calculate(server);
     }
 }

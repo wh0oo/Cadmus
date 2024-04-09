@@ -15,7 +15,6 @@ import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectCharImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectCharPair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -53,6 +52,15 @@ public class TeamApiImpl implements TeamApi {
             }
         }
         return this.selected;
+    }
+
+    @Override
+    public Set<UUID> getAllTeams(MinecraftServer server) {
+        Set<UUID> teams = getSelected().getAllTeams(server);
+        server.getAllLevels().forEach(level -> teams.addAll(ClaimApi.API.getAllClaimsByOwner(level).keySet()));
+        server.getPlayerList().getPlayers().forEach(player -> teams.add(player.getUUID()));
+        teams.addAll(FlagApi.API.getAllAdminTeams(server).keySet());
+        return teams;
     }
 
     @Override
@@ -142,27 +150,10 @@ public class TeamApiImpl implements TeamApi {
     public void syncAllTeamInfo(MinecraftServer server) {
         Map<UUID, ObjectCharPair<String>> teamInfo = new HashMap<>();
 
-        server.getAllLevels().forEach(level ->
-            ClaimApi.API.getAllClaimsByOwner(level).keySet().forEach(id -> {
-                String name = getName(server, id).getString();
-                char color = getColor(server, id).getChar();
-                teamInfo.put(id, new ObjectCharImmutablePair<>(name, color));
-            })
-        );
-
-        FlagApi.API.getAllAdminTeams(server).keySet().forEach(id -> {
+        getAllTeams(server).forEach(id -> {
             String name = getName(server, id).getString();
             char color = getColor(server, id).getChar();
-            teamInfo.put(id, new ObjectCharImmutablePair<>(name, color));
-        });
-
-        server.getPlayerList().getPlayers().forEach(player -> {
-            UUID id = player.getUUID();
-            if (!teamInfo.containsKey(id)) {
-                String name = getName(server, id).getString();
-                char color = getColor(server, id).getChar();
-                teamInfo.put(id, new ObjectCharImmutablePair<>(name, color));
-            }
+            teamInfo.put(id, ObjectCharPair.of(name, color));
         });
 
         NetworkHandler.sendToAllClientPlayers(new ClientboundSyncAllTeamInfoPacket(teamInfo), server);

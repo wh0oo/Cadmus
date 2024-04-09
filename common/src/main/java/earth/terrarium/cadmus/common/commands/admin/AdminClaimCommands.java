@@ -44,7 +44,7 @@ public class AdminClaimCommands {
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String team = StringArgumentType.getString(context, "id");
-                            create(player, team);
+                            create(context.getSource(), team);
                             return 1;
                         })
                     )
@@ -53,9 +53,8 @@ public class AdminClaimCommands {
                     .then(Commands.argument("id", StringArgumentType.string())
                         .suggests(ADMIN_TEAM_SUGGESTION_PROVIDER)
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             String team = StringArgumentType.getString(context, "id");
-                            remove(player, team);
+                            remove(context.getSource(), team);
                             return 1;
                         })
                     )
@@ -65,18 +64,15 @@ public class AdminClaimCommands {
                         .suggests(ADMIN_TEAM_SUGGESTION_PROVIDER)
                         .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
                                 String team = StringArgumentType.getString(context, "id");
-                                claim(player, pos, team);
+                                claim(context.getSource(), pos, team);
                                 return 1;
                             })
                         )
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
-                            ChunkPos pos = player.chunkPosition();
                             String team = StringArgumentType.getString(context, "id");
-                            claim(player, pos, team);
+                            claim(context.getSource(), context.getSource().getPlayerOrException().chunkPosition(), team);
                             return 1;
                         })
                     )
@@ -86,18 +82,15 @@ public class AdminClaimCommands {
                         .suggests(ADMIN_TEAM_SUGGESTION_PROVIDER)
                         .then(Commands.argument("pos", ColumnPosArgument.columnPos())
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 ChunkPos pos = ColumnPosArgument.getColumnPos(context, "pos").toChunkPos();
                                 String team = StringArgumentType.getString(context, "id");
-                                unclaim(player, pos, team);
+                                unclaim(context.getSource(), pos, team);
                                 return 1;
                             })
                         )
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
-                            ChunkPos pos = player.chunkPosition();
                             String team = StringArgumentType.getString(context, "id");
-                            unclaim(player, pos, team);
+                            unclaim(context.getSource(), context.getSource().getPlayerOrException().chunkPosition(), team);
                             return 1;
                         })
                     )
@@ -106,9 +99,8 @@ public class AdminClaimCommands {
                     .then(Commands.argument("id", StringArgumentType.string())
                         .suggests(ADMIN_TEAM_SUGGESTION_PROVIDER)
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             String team = StringArgumentType.getString(context, "id");
-                            unclaimAll(player, team);
+                            unclaimAll(context.getSource(), team);
                             return 1;
                         })
                     )
@@ -117,58 +109,58 @@ public class AdminClaimCommands {
         );
     }
 
-    private static void create(ServerPlayer player, String team) throws CommandSyntaxException {
-        if (FlagApi.API.isAdminTeam(player.server, team)) throw ADMIN_TEAM_ALREADY_EXISTS.create();
-        UUID id = FlagApi.API.createAdminTeam(player.server, team);
-        FlagApi.API.setFlag(player.server, id, Flags.DISPLAY_NAME.id(), new StringFlag(team));
-        FlagApi.API.setFlag(player.server, id, Flags.COLOR.id(), new ChatFormattingFlag(ChatFormatting.LIGHT_PURPLE));
-        player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.admin.create", team), false);
-        TeamApi.API.syncTeamInfo(player.server, id, true);
+    private static void create(CommandSourceStack source, String team) throws CommandSyntaxException {
+        if (FlagApi.API.isAdminTeam(source.getServer(), team)) throw ADMIN_TEAM_ALREADY_EXISTS.create();
+        UUID id = FlagApi.API.createAdminTeam(source.getServer(), team);
+        FlagApi.API.setFlag(source.getServer(), id, Flags.DISPLAY_NAME.id(), new StringFlag(team));
+        FlagApi.API.setFlag(source.getServer(), id, Flags.COLOR.id(), new ChatFormattingFlag(ChatFormatting.LIGHT_PURPLE));
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.admin.create", team), false);
+        TeamApi.API.syncTeamInfo(source.getServer(), id, true);
     }
 
-    private static void remove(ServerPlayer player, String team) throws CommandSyntaxException {
-        if (!FlagApi.API.isAdminTeam(player.server, team)) throw ADMIN_TEAM_DOES_NOT_EXIST.create();
-        UUID id = FlagApi.API.getIdFromName(player.server, team).orElse(null);
+    private static void remove(CommandSourceStack source, String team) throws CommandSyntaxException {
+        if (!FlagApi.API.isAdminTeam(source.getServer(), team)) throw ADMIN_TEAM_DOES_NOT_EXIST.create();
+        UUID id = FlagApi.API.getIdFromName(source.getServer(), team).orElse(null);
         if (id == null) throw ADMIN_TEAM_DOES_NOT_EXIST.create();
 
-        FlagApi.API.removeAdminTeam(player.server, id);
-        player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.admin.remove", team), false);
+        FlagApi.API.removeAdminTeam(source.getServer(), id);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.admin.remove", team), false);
     }
 
-    private static void claim(ServerPlayer player, ChunkPos pos, String team) throws CommandSyntaxException {
-        UUID id = FlagApi.API.getIdFromName(player.server, team).orElse(null);
+    private static void claim(CommandSourceStack source, ChunkPos pos, String team) throws CommandSyntaxException {
+        UUID id = FlagApi.API.getIdFromName(source.getServer(), team).orElse(null);
         if (id == null) throw AdminClaimCommands.ADMIN_TEAM_DOES_NOT_EXIST.create();
 
-        ClaimCommand.checkClaimed(player.serverLevel(), pos);
+        ClaimCommand.checkClaimed(source.getLevel(), pos);
 
-        ClaimApi.API.claim(player.serverLevel(), id, pos, false);
+        ClaimApi.API.claim(source.getLevel(), id, pos, false);
 
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             "command.cadmus.info.claimed_admin_chunk_at",
             pos.x, pos.z
         ), false);
     }
 
-    private static void unclaim(ServerPlayer player, ChunkPos pos, String team) throws CommandSyntaxException {
-        UUID id = FlagApi.API.getIdFromName(player.server, team).orElse(null);
+    private static void unclaim(CommandSourceStack source, ChunkPos pos, String team) throws CommandSyntaxException {
+        UUID id = FlagApi.API.getIdFromName(source.getServer(), team).orElse(null);
         if (id == null) throw AdminClaimCommands.ADMIN_TEAM_DOES_NOT_EXIST.create();
 
-        ClaimApi.API.unclaim(player.serverLevel(), id, pos);
+        ClaimApi.API.unclaim(source.getLevel(), id, pos);
 
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             "command.cadmus.info.unclaimed_admin_chunk_at",
             pos.x, pos.z
         ), false);
     }
 
-    private static void unclaimAll(ServerPlayer player, String team) throws CommandSyntaxException {
-        UUID id = FlagApi.API.getIdFromName(player.server, team).orElse(null);
+    private static void unclaimAll(CommandSourceStack source, String team) throws CommandSyntaxException {
+        UUID id = FlagApi.API.getIdFromName(source.getServer(), team).orElse(null);
         if (id == null) throw AdminClaimCommands.ADMIN_TEAM_DOES_NOT_EXIST.create();
 
-        int oldClaimsCount = ClaimCommand.getClaimsCount(player.serverLevel(), id, false);
-        ClaimApi.API.clear(player.level(), id);
-        int diff = oldClaimsCount - ClaimCommand.getClaimsCount(player, false);
-        player.displayClientMessage(ModUtils.translatableWithStyle(
+        int oldClaimsCount = ClaimCommand.getClaimsCount(source.getLevel(), id, false);
+        ClaimApi.API.clear(source.getLevel(), id);
+        int diff = oldClaimsCount - ClaimCommand.getClaimsCount(source.getLevel(), id, false);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle(
             "command.cadmus.info.unclaimed_all_admin",
             diff
         ), false);

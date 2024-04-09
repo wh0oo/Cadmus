@@ -2,9 +2,12 @@ package earth.terrarium.cadmus.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import earth.terrarium.cadmus.Cadmus;
+import earth.terrarium.cadmus.client.claimmap.ClaimScreen;
 import earth.terrarium.cadmus.client.compat.prometheus.PrometheusClientCompat;
 import earth.terrarium.cadmus.common.claims.ClaimSaveData;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
+import earth.terrarium.cadmus.common.network.NetworkHandler;
+import earth.terrarium.cadmus.common.network.packets.ServerboundSendSilentChatCommandPacket;
 import it.unimi.dsi.fastutil.objects.ObjectCharPair;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -37,18 +40,19 @@ public class CadmusClient {
         }
     }
 
-
     public static void onPlayerLoggedOut() {
         ClaimSaveData.clearClientClaims();
         TEAM_INFO.clear();
     }
 
     public static void openClaimMap() {
-        // TODO
+        Minecraft.getInstance().setScreen(new ClaimScreen());
     }
 
     public static void onEnterSection() {
-        // TODO
+        if (Minecraft.getInstance().screen instanceof ClaimScreen screen) {
+            screen.refresh();
+        }
     }
 
     @NotNull
@@ -56,7 +60,7 @@ public class CadmusClient {
         return Objects.requireNonNull(Minecraft.getInstance().level);
     }
 
-    public static void sendCommand(String command) {
-        Objects.requireNonNull(Minecraft.getInstance().getConnection()).sendUnsignedCommand(command);
+    public static void sendSilentCommand(String command) {
+        NetworkHandler.CHANNEL.sendToServer(new ServerboundSendSilentChatCommandPacket(command));
     }
 }

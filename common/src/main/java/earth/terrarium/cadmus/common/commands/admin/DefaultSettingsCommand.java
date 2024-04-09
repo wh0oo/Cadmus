@@ -7,7 +7,6 @@ import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
 
 public class DefaultSettingsCommand {
 
@@ -19,22 +18,27 @@ public class DefaultSettingsCommand {
                     .then(Commands.literal(setting)
                         .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
-                                boolean value = BoolArgumentType.getBool(context, "value");
-                                CadmusSaveData.setDefaultClaimSetting(player.server, setting, value);
-                                player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.set", setting, value), false);
+                                set(context.getSource(), setting, BoolArgumentType.getBool(context, "value"));
                                 return 1;
                             })
                         )
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
-                            boolean value = CadmusSaveData.getDefaultClaimSetting(player.server, setting);
-                            player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.get", setting, value), false);
+                            get(context.getSource(), setting);
                             return 1;
                         })
                     )
                 )
             )
         );
+    }
+
+    private static void set(CommandSourceStack source, String setting, boolean value) {
+        CadmusSaveData.setDefaultClaimSetting(source.getServer(), setting, value);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.set", setting, value), false);
+    }
+
+    private static void get(CommandSourceStack source, String setting) {
+        boolean value = CadmusSaveData.getDefaultClaimSetting(source.getServer(), setting);
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.get", setting, value), false);
     }
 }

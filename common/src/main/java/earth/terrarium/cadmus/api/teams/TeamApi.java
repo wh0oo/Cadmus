@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface TeamApi {
@@ -31,6 +32,25 @@ public interface TeamApi {
      * @return the selected team.
      */
     Team getSelected();
+
+    /**
+     * Gets all the teams.
+     *
+     * @param server The server.
+     * @return All the teams.
+     */
+    Set<UUID> getAllTeams(MinecraftServer server);
+
+    /**
+     * Checks if the team exists.
+     *
+     * @param server The server.
+     * @param id     The ID of the team.
+     * @return true if the team exists, false otherwise.
+     */
+    default boolean teamExists(MinecraftServer server, UUID id) {
+        return this.getAllTeams(server).contains(id);
+    }
 
     /**
      * If the ID is a team, gets the team name. If the ID is a player, gets the player name. If the ID is an admin team, gets the name flag. If it can't find any of these, return "Unknown"

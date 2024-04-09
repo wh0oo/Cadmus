@@ -10,7 +10,6 @@ import com.teamresourceful.resourcefullib.common.network.base.PacketType;
 import com.teamresourceful.resourcefullib.common.network.defaults.CodecPacketType;
 import earth.terrarium.cadmus.Cadmus;
 import earth.terrarium.cadmus.client.CadmusClient;
-import it.unimi.dsi.fastutil.objects.ObjectCharImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectCharPair;
 import net.minecraft.resources.ResourceLocation;
 
@@ -39,7 +38,7 @@ public record ClientboundSyncAllTeamInfoPacket(
                     new MapCodec<>(
                         ByteCodec.UUID,
                         new PairCodec<>(ByteCodec.STRING, ByteCodec.CHAR)
-                            .map(entry -> (ObjectCharPair<String>) new ObjectCharImmutablePair<>(entry.getKey(), entry.getValue()),
+                            .map(entry -> ObjectCharPair.of(entry.getKey(), entry.getValue()),
                                 pair -> new AbstractMap.SimpleEntry<>(pair.left(), pair.rightChar())
                             )).fieldOf(ClientboundSyncAllTeamInfoPacket::teamInfo),
                     ClientboundSyncAllTeamInfoPacket::new

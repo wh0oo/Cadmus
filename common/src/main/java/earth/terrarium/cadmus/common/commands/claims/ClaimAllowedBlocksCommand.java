@@ -12,7 +12,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,9 +29,8 @@ public class ClaimAllowedBlocksCommand {
                     .then(Commands.literal("add")
                         .then(Commands.argument("value", BlockStateArgument.block(buildContext))
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 BlockState block = BlockStateArgument.getBlock(context, "value").getState();
-                                addBlock(player, block);
+                                addBlock(context.getSource(), block);
                                 return 1;
                             })
                         )
@@ -40,21 +38,20 @@ public class ClaimAllowedBlocksCommand {
                     .then(Commands.literal("remove")
                         .then(Commands.argument("value", BlockStateArgument.block(buildContext))
                             .executes(context -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
                                 BlockState block = BlockStateArgument.getBlock(context, "value").getState();
-                                removeBlock(player, block);
+                                removeBlock(context.getSource(), block);
                                 return 1;
                             })
                         )
                     )
                     .then(Commands.literal("list")
                         .executes(context -> {
-                            listBlocks(context.getSource().getPlayerOrException());
+                            listBlocks(context.getSource());
                             return 1;
                         })
                     )
                     .executes(context -> {
-                        listBlocks(context.getSource().getPlayerOrException());
+                        listBlocks(context.getSource());
                         return 1;
                     })
                 )
@@ -62,22 +59,22 @@ public class ClaimAllowedBlocksCommand {
         );
     }
 
-    private static void addBlock(ServerPlayer player, BlockState block) {
-        CadmusSaveData.addAllowedBlock(player.server, TeamApi.API.getId(player), block.getBlock());
-        player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.add_allowed_block", block.getBlock().getName()), false);
+    private static void addBlock(CommandSourceStack source, BlockState block) throws CommandSyntaxException {
+        CadmusSaveData.addAllowedBlock(source.getServer(), TeamApi.API.getId(source.getPlayerOrException()), block.getBlock());
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.add_allowed_block", block.getBlock().getName()), false);
     }
 
-    private static void removeBlock(ServerPlayer player, BlockState block) throws CommandSyntaxException {
-        UUID id = TeamApi.API.getId(player);
-        if (!CadmusSaveData.isBlockAllowed(player.server, id, block.getBlock())) throw BLOCK_NOT_ADDED.create();
-        CadmusSaveData.removeAllowedBlock(player.server, id, block.getBlock());
-        player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.remove_allowed_block", block.getBlock().getName()), false);
+    private static void removeBlock(CommandSourceStack source, BlockState block) throws CommandSyntaxException {
+        UUID id = TeamApi.API.getId(source.getPlayerOrException());
+        if (!CadmusSaveData.isBlockAllowed(source.getServer(), id, block.getBlock())) throw BLOCK_NOT_ADDED.create();
+        CadmusSaveData.removeAllowedBlock(source.getServer(), id, block.getBlock());
+        source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.remove_allowed_block", block.getBlock().getName()), false);
     }
 
-    private static void listBlocks(ServerPlayer player) {
-        CadmusSaveData.getAllowedBlocks(player.server, TeamApi.API.getId(player)).forEach(key -> {
+    private static void listBlocks(CommandSourceStack source) throws CommandSyntaxException {
+        CadmusSaveData.getAllowedBlocks(source.getServer(), TeamApi.API.getId(source.getPlayerOrException())).forEach(key -> {
             Block block = BuiltInRegistries.BLOCK.get(key);
-            player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.setting.list_allowed_blocks", block == Blocks.AIR ? key : block.getName()), false);
+            source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.setting.list_allowed_blocks", block == Blocks.AIR ? key : block.getName()), false);
         });
     }
 }

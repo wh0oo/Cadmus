@@ -89,9 +89,6 @@
   "gamerule.doClaimedItemPickup.description": "Claimed Item Pickup",
 
   "option.prometheus.cadmus/v1": "Cadmus",
-  "cadmus.options.cadmus_options.title": "Cadmus Options",
-  "cadmus.options.cadmus_options.max_claims": "Max Claims",
-  "cadmus.options.cadmus_options.max_loaded_chunks": "Max Chunk Loaded",
 
   "cadmus.block_breaking.permission":  "Claimed Block Breaking",
   "cadmus.block_placing.permission":  "Claimed Block Placing",
@@ -111,5 +108,11 @@
   "cadmus.personal.entity_interactions":  "Personal Entity Interactions",
   "cadmus.personal.entity_damage":  "Personal Entity Damage",
   "cadmus.personal.mob_griefing":  "Personal Mob Griefing",
-  "cadmus.personal.item_pickup":  "Personal Item Pickup"
+  "cadmus.personal.item_pickup":  "Personal Item Pickup",
+
+  "gui.cadmus.claim_map.title": "Claim Map",
+  "gui.cadmus.claim_map.clear_claimed_chunks": "Clear Claimed Chunks",
+  "gui.cadmus.claim_map.close": "Close",
+  "gui.cadmus.claim_map.max_claims": "Max Claims",
+  "gui.cadmus.claim_map.max_chunk_loaded_claims": "Max Chunk Loaded Claims"
 }

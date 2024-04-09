@@ -31,7 +31,10 @@ public class ConstantComponents {
 
     public static final Component WILDERNESS = CommonUtils.serverTranslatable("message.cadmus.wilderness").copy().withStyle(ChatFormatting.GREEN);
 
-    public static final Component CADMUS_TITLE = Component.translatable("cadmus.options.cadmus_options.title");
-    public static final Component CLAIMS_MAX = Component.translatable("cadmus.options.cadmus_options.max_claims");
-    public static final Component CHUNK_LOADED_MAX = Component.translatable("cadmus.options.cadmus_options.max_loaded_chunks");
+
+    public static final Component MAP_TITLE = Component.translatable("gui.cadmus.claim_map.title");
+    public static final Component CLEAR_CLAIMED_CHUNKS = Component.translatable("gui.cadmus.claim_map.clear_claimed_chunks");
+    public static final Component CLOSE = Component.translatable("gui.cadmus.claim_map.close");
+    public static final Component MAX_CLAIMS = Component.translatable("gui.cadmus.claim_map.max_claims");
+    public static final Component MAX_CHUNK_LOADED_CLAIMS = Component.translatable("gui.cadmus.claim_map.max_chunk_loaded_claims");
 }

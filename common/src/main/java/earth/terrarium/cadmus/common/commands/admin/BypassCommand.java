@@ -6,30 +6,40 @@ import earth.terrarium.cadmus.common.utils.CadmusSaveData;
 import earth.terrarium.cadmus.common.utils.ModUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+
+import java.util.UUID;
 
 public class BypassCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
             .requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+            .then(Commands.argument("player", EntityArgument.player())
+                .executes(context -> {
+                    bypass(context.getSource(), EntityArgument.getPlayer(context, "player"));
+                    return 1;
+                })
+            )
             .then(Commands.literal("bypass")
                 .executes(context -> {
-                    bypass(context.getSource().getPlayerOrException());
+                    bypass(context.getSource(), context.getSource().getPlayerOrException());
                     return 1;
                 })
             )
         );
     }
 
-    private static void bypass(ServerPlayer player) {
-        CadmusSaveData.toggleBypass(player.server, player.getUUID());
-        Component name = Component.literal(player.getGameProfile().getName()).withStyle(TeamApi.API.getColor(player.level(), player.getUUID()));
-        if (CadmusSaveData.canBypass(player.server, player.getUUID())) {
-            player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.bypass.enable", name), false);
+    private static void bypass(CommandSourceStack source, ServerPlayer player) {
+        UUID id = player.getUUID();
+        CadmusSaveData.toggleBypass(source.getServer(), id);
+        Component name = Component.literal(player.getGameProfile().getName()).withStyle(TeamApi.API.getColor(source.getLevel(), id));
+        if (CadmusSaveData.canBypass(source.getServer(), id)) {
+            source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.bypass.enable", name), false);
         } else {
-            player.displayClientMessage(ModUtils.translatableWithStyle("command.cadmus.bypass.disable", name), false);
+            source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.bypass.disable", name), false);
         }
     }
 }

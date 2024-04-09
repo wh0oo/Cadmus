@@ -30,7 +30,7 @@ public class ClaimSaveData extends SaveHandler {
                 int z = BlockPos.getZ(value);
                 boolean chunkLoaded = BlockPos.getY(value) == 1;
                 ChunkPos pos = new ChunkPos(x, z);
-                this.claims.put(pos, new ObjectBooleanImmutablePair<>(id, chunkLoaded));
+                this.claims.put(pos, ObjectBooleanPair.of(id, chunkLoaded));
                 this.claimsById.computeIfAbsent(id, uuid -> new Object2BooleanOpenHashMap<>()).put(pos, chunkLoaded);
             }
         });
