@@ -29,6 +29,7 @@
   ],
   "client": [
     "client.compat.xaero.GuiMapMixin",
+    "client.compat.xaero.ModOptionsMixin",
     "client.compat.xaero.ModSettingsMixin",
     "client.compat.xaero.WorldMapSessionMixin"
   ],

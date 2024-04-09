@@ -31,7 +31,6 @@ public class CadmusChunkHighlighter extends ChunkHighlighter {
         return true;
     }
 
-    // TODO mixin to enable opacity options
     @Override
     protected int[] getColors(ResourceKey<Level> dimension, int chunkX, int chunkZ) {
         if (!WorldMap.settings.displayClaims) return null;

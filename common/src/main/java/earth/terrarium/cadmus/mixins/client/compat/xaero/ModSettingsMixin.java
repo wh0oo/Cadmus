@@ -14,12 +14,31 @@ public abstract class ModSettingsMixin {
 
     @Inject(
         method = "setOptionValue",
-        at = @At(value = "HEAD",
-                 target = "Lxaero/map/settings/ModSettings;displayClaims:Z"
+        at = @At(
+            value = "HEAD",
+            target = "Lxaero/map/settings/ModSettings;displayClaims:Z",
+            shift = At.Shift.AFTER
         )
     )
     // Update claimed chunks when the user toggles chunk visibility.
-    private void cadmus$setOptionValue(ModOptions par1EnumOptions, Object value, CallbackInfo ci) {
-        XaerosCompat.updateAll(CadmusClient.level().dimension());
+    private void cadmus$setOptionValue(ModOptions option, Object value, CallbackInfo ci) {
+        if (option == ModOptions.PAC_CLAIMS) {
+            XaerosCompat.updateAll(CadmusClient.level().dimension());
+        }
+    }
+
+    @Inject(
+        method = "setOptionDoubleValue",
+        at = @At(
+            value = "HEAD",
+            target = "Lxaero/map/settings/ModSettings;displayClaims:Z",
+            shift = At.Shift.AFTER
+        )
+    )
+    // Update claimed chunks when the user changes transparency options.
+    private void cadmus$setOptionDoubleValue(ModOptions option, double value, CallbackInfo ci) {
+        if (option == ModOptions.PAC_CLAIMS_BORDER_OPACITY || option == ModOptions.PAC_CLAIMS_FILL_OPACITY) {
+            XaerosCompat.updateAll(CadmusClient.level().dimension());
+        }
     }
 }
