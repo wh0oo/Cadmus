@@ -50,7 +50,9 @@ public class ClaimLimitApiImpl implements ClaimLimitApi {
     public void calculate(MinecraftServer server) {
         this.maxClaimsByTeam.clear();
         TeamApi.API.getAllTeams(server).forEach(id -> calculate(server, id, false));
-        NetworkHandler.sendToAllClientPlayers(new ClientboundSyncAllMaxClaims(this.maxClaimsByTeam), server);
+        if (!maxClaimsByTeam.isEmpty()) {
+            NetworkHandler.sendToAllClientPlayers(new ClientboundSyncAllMaxClaims(this.maxClaimsByTeam), server);
+        }
     }
 
     @Override

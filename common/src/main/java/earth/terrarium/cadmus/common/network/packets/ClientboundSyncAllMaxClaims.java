@@ -48,7 +48,7 @@ public record ClientboundSyncAllMaxClaims(
 
         @Override
         public Runnable handle(ClientboundSyncAllMaxClaims packet) {
-            return () -> ClaimLimitApi.API.set(packet.maxClaimsByTeam);
+            return () -> ClaimLimitApi.API.set(Map.copyOf(packet.maxClaimsByTeam));
         }
     }
 }
