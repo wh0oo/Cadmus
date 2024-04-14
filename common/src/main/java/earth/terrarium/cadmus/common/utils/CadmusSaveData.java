@@ -6,6 +6,9 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,10 +40,10 @@ public class CadmusSaveData extends SaveHandler {
 
         CompoundTag allowedBlocksTag = tag.getCompound("allowedBlocks");
         allowedBlocksTag.getAllKeys().forEach(id -> {
-            CompoundTag blockTag = allowedBlocksTag.getCompound(id);
+            ListTag blockTag = allowedBlocksTag.getList(id, Tag.TAG_STRING);
             Set<ResourceLocation> blocks = new HashSet<>();
-            blockTag.getAllKeys().forEach(namespace ->
-                blocks.add(new ResourceLocation(namespace, blockTag.getString(namespace))));
+            blockTag.forEach(tagEntry ->
+                blocks.add(new ResourceLocation(tagEntry.getAsString())));
             allowedBlocks.put(UUID.fromString(id), blocks);
         });
 
@@ -64,8 +67,8 @@ public class CadmusSaveData extends SaveHandler {
 
         CompoundTag allowedBlocksTag = new CompoundTag();
         this.allowedBlocks.forEach((id, blocks) -> {
-            CompoundTag blockTag = new CompoundTag();
-            blocks.forEach(block -> blockTag.putString(block.getNamespace(), block.getPath()));
+            ListTag blockTag = new ListTag();
+            blocks.forEach(block -> blockTag.add(StringTag.valueOf(block.toString())));
             allowedBlocksTag.put(id.toString(), blockTag);
         });
         tag.put("allowedBlocks", allowedBlocksTag);
