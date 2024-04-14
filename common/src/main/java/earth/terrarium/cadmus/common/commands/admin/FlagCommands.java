@@ -21,7 +21,7 @@ public class FlagCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("cadmus")
-            .requires((commandSourceStack) -> commandSourceStack.hasPermission(2));
+            .requires(source -> source.hasPermission(2));
 
         FlagApi.API.getAllDefaults().forEach((name, flag) ->
             dispatcher.register(command
@@ -75,9 +75,9 @@ public class FlagCommands {
             throw AdminClaimCommands.ADMIN_TEAM_DOES_NOT_EXIST.create();
 
         FlagApi.API.getIdFromName(source.getServer(), team).ifPresent(id -> {
-            Flag<?> oldValue = FlagApi.API.getFlag(source.getServer(), id, flagName);
+            Flag<?> oldFlagValue = FlagApi.API.getFlag(source.getServer(), id, flagName);
             FlagApi.API.setFlag(source.getServer(), id, flagName, flag);
-            source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.admin.set_flag", flagName, oldValue, flag), false);
+            source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.admin.set_flag", flagName, oldFlagValue, flag), false);
             TeamApi.API.syncTeamInfo(source.getServer(), id, true);
         });
     }

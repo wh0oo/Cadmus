@@ -10,7 +10,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -115,15 +114,6 @@ public interface TeamApi {
     boolean isOnTeam(@NotNull Player player);
 
     /**
-     * Gets the player by their UUID, or empty if the player is not found.
-     *
-     * @param server The server.
-     * @param id     The player's UUID.
-     * @return The player or empty if the player is not found.
-     */
-    Optional<Player> getPlayer(MinecraftServer server, UUID id);
-
-    /**
      * Checks if the player can modify the team's settings.
      *
      * @param player The player.
@@ -145,6 +135,13 @@ public interface TeamApi {
      * @param server The server.
      */
     void syncAllTeamInfo(MinecraftServer server);
+
+    /**
+     * Syncs all IDs and their names and colors to the player.
+     *
+     * @param player The player.
+     */
+    void syncAllTeamInfo(ServerPlayer player);
 
     /**
      * Syncs the team ID and its corresponding name and color to all clients.

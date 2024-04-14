@@ -1,6 +1,5 @@
 package earth.terrarium.cadmus.api.teams;
 
-import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.events.CadmusEvents;
 import earth.terrarium.cadmus.common.claims.limit.ClaimLimitApiImpl;
 import net.minecraft.ChatFormatting;
@@ -11,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -42,7 +40,7 @@ public interface Team {
      * @param id    The ID of the team.
      * @return The members of the team.
      */
-    List<GameProfile> getMembers(Level level, UUID id);
+    Set<UUID> getMembers(Level level, UUID id);
 
     /**
      * Checks if the player is a member of the team.

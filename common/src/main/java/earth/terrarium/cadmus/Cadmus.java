@@ -51,7 +51,7 @@ public class Cadmus {
 
     public static void onPlayerJoin(ServerPlayer player) {
         ModUtils.sendJoinPackets(player);
-        TeamApi.API.syncAllTeamInfo(player.server);
+        TeamApi.API.syncAllTeamInfo(player);
         TeamApi.API.displayTeamName(player);
         ClaimLimitApiImpl.API.calculate(player.server, player.getUUID(), true);
     }

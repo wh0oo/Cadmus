@@ -37,7 +37,7 @@ public record ClientboundSyncAllMaxClaims(
                 ObjectByteCodec.create(
                     new MapCodec<>(
                         ByteCodec.UUID,
-                        new PairCodec<>(ByteCodec.INT, ByteCodec.INT)
+                        new PairCodec<>(ByteCodec.VAR_INT, ByteCodec.VAR_INT)
                             .map(entry -> IntIntPair.of(entry.getKey(), entry.getValue()),
                                 pair -> new AbstractMap.SimpleEntry<>(pair.leftInt(), pair.rightInt())
                             )).fieldOf(ClientboundSyncAllMaxClaims::maxClaimsByTeam),

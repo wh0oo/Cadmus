@@ -8,9 +8,9 @@ import earth.terrarium.prometheus.api.roles.client.PageApi;
 public class PrometheusClientCompat {
 
     public static void init() {
+        PageApi.API.register(CadmusOptions.SERIALIZER.id(), CadmusOptionsPage::new);
+
         ProtectionApi.API.getProtections().values().forEach(protection ->
             PermissionApi.API.addAutoComplete(protection.permission()));
-
-        PageApi.API.register(CadmusOptions.SERIALIZER.id(), CadmusOptionsPage::new);
     }
 }

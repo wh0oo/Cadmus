@@ -12,7 +12,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.item.ItemStack;
 
@@ -22,7 +21,6 @@ public class CadmusFabric implements ModInitializer {
     public void onInitialize() {
         Cadmus.init();
         ServerLifecycleEvents.SERVER_STARTED.register(Cadmus::onServerStarted);
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> Cadmus.onPlayerJoin(handler.player));
         CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> CadmusCommands.register(dispatcher, context));
 
         BlockBreakProtectionImpl.register();

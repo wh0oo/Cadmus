@@ -23,7 +23,11 @@ public abstract class BucketItemMixin {
     @Final
     private Fluid content;
 
-    @Inject(method = "emptyContents*", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "emptyContents(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/BlockHitResult;Lnet/minecraft/world/item/ItemStack;)Z",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     public void cadmus$emptyContents(@Nullable Player player, Level level, BlockPos pos, BlockHitResult result, @Nullable ItemStack container, CallbackInfoReturnable<Boolean> cir) {
         if (player != null) {
             if (!Protections.BLOCK_PLACING.canPlaceBlock(player, pos, content.defaultFluidState().createLegacyBlock()))

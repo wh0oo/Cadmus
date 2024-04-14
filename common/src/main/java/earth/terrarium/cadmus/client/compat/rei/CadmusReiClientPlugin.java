@@ -10,7 +10,7 @@ public class CadmusReiClientPlugin implements REIClientPlugin {
     @Override
     public void registerFavorites(FavoriteEntryType.Registry registry) {
         registry.register(MapFavoriteEntry.ID, MapFavoriteEntry.Type.INSTANCE);
-        registry.getOrCrateSection(Component.translatable("rei.sections.odyssey"))
+        registry.getOrCrateSection(Component.translatable("rei.sections.project_odyssey"))
             .add(new MapFavoriteEntry());
     }
 }

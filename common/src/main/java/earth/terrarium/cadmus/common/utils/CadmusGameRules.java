@@ -72,22 +72,12 @@ public class CadmusGameRules {
     }
 
     @ExpectPlatform
-    private static GameRules.Type<GameRules.IntegerValue> createIntRule(int defaultValue) {
-        throw new NotImplementedException();
-    }
-
-    @ExpectPlatform
     private static GameRules.Type<GameRules.IntegerValue> createIntRule(int defaultValue, BiConsumer<MinecraftServer, GameRules.IntegerValue> changeListener) {
         throw new NotImplementedException();
     }
 
     @ExpectPlatform
     private static GameRules.Type<GameRules.BooleanValue> createBooleanRule(boolean defaultValue) {
-        throw new NotImplementedException();
-    }
-
-    @ExpectPlatform
-    private static GameRules.Type<GameRules.BooleanValue> createBooleanRule(boolean defaultValue, BiConsumer<MinecraftServer, GameRules.BooleanValue> changeListener) {
         throw new NotImplementedException();
     }
 

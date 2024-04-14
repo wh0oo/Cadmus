@@ -1,38 +1,33 @@
 package earth.terrarium.cadmus.api.flags.types;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import earth.terrarium.cadmus.api.flags.Flag;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 
-public record FloatFlag(float value) implements Flag<Float> {
+public record FloatFlag(String id, Float value) implements Flag<Float> {
 
     @Override
-    public Float get() {
-        return value;
+    public ArgumentBuilder<CommandSourceStack, ?> createArgument(String argument) {
+        return Commands.argument(argument, FloatArgumentType.floatArg());
     }
 
     @Override
-    public RequiredArgumentBuilder<CommandSourceStack, Float> createArgument(String name) {
-        return Commands.argument(name, FloatArgumentType.floatArg());
+    public Flag<Float> getFromArgument(String argument, CommandContext<CommandSourceStack> context) {
+        return new FloatFlag(id, FloatArgumentType.getFloat(context, argument));
     }
 
     @Override
-    public Flag<Float> getFromArgument(String name, CommandContext<CommandSourceStack> context) {
-        return new FloatFlag(FloatArgumentType.getFloat(context, name));
+    public void serialize(CompoundTag tag) {
+        tag.putFloat(id, value);
     }
 
     @Override
-    public void serialize(String name, CompoundTag tag) {
-        tag.putFloat(name, value);
-    }
-
-    @Override
-    public Flag<Float> deserialize(String name, CompoundTag tag) {
-        return new FloatFlag(tag.getFloat(name));
+    public Flag<Float> deserialize(CompoundTag tag) {
+        return new FloatFlag(id, tag.getFloat(id));
     }
 
     @Override

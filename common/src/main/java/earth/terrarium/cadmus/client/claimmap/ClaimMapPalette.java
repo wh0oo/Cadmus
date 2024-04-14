@@ -3,6 +3,7 @@ package earth.terrarium.cadmus.client.claimmap;
 import net.minecraft.world.level.material.MapColor;
 
 public class ClaimMapPalette {
+
     public static final int[][] COLORS = new int[][]{
         {0, 0, 0, 0}, // None
         {0x9AB633, 0x799F32, 0x678E32, 0x517A30}, // Grass

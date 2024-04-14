@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.Contract;
@@ -77,6 +78,16 @@ public class ModUtils {
     }
 
     public static Component translatableWithStyle(String key, Object... args) {
+        for (int i = 0; i < args.length; ++i) {
+            if (!(args[i] instanceof MutableComponent component)) continue;
+            if (component.getStyle().getColor() == null) continue;
+
+            ChatFormatting color = ChatFormatting.getByName(component.getStyle().getColor().toString());
+            if (color != null) {
+                args[i] = "§" + color.getChar() + component.getString();
+            }
+        }
+
         return Component.literal(CommonUtils.serverTranslatable(key, args).getString());
     }
 }

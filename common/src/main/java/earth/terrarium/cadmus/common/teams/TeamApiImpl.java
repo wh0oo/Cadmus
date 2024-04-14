@@ -117,7 +117,7 @@ public class TeamApiImpl implements TeamApi {
 
     @Override
     public boolean isMember(Level level, UUID id, Player player) {
-        return getSelected().isMember(level, id, player) || player.getUUID().equals(id);
+        return player.getUUID().equals(id) || getSelected().isMember(level, id, player);
     }
 
     @Override
@@ -128,11 +128,6 @@ public class TeamApiImpl implements TeamApi {
     @Override
     public boolean isOnTeam(@NotNull Player player) {
         return getSelected().getId(player).isPresent();
-    }
-
-    @Override
-    public Optional<Player> getPlayer(MinecraftServer server, UUID id) {
-        return Optional.ofNullable(server.getPlayerList().getPlayer(id));
     }
 
     @Override
@@ -157,6 +152,21 @@ public class TeamApiImpl implements TeamApi {
         });
 
         NetworkHandler.sendToAllClientPlayers(new ClientboundSyncAllTeamInfoPacket(teamInfo), server);
+    }
+
+    @Override
+    public void syncAllTeamInfo(ServerPlayer player) {
+        if (NetworkHandler.CHANNEL.canSendToPlayer(player, ClientboundSyncAllTeamInfoPacket.TYPE)) {
+            Map<UUID, ObjectCharPair<String>> teamInfo = new HashMap<>();
+
+            getAllTeams(player.server).forEach(id -> {
+                String name = getName(player.server, id).getString();
+                char color = getColor(player.server, id).getChar();
+                teamInfo.put(id, ObjectCharPair.of(name, color));
+            });
+
+            NetworkHandler.CHANNEL.sendToPlayer(new ClientboundSyncAllTeamInfoPacket(teamInfo), player);
+        }
     }
 
     @Override

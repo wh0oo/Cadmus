@@ -26,7 +26,9 @@ public class NetworkHandler {
         CHANNEL.register(ClientboundSyncAllMaxClaims.TYPE);
     }
 
-    // Sends to all clients that have Cadmus installed
+    /**
+     * Sends to all clients that have Cadmus installed
+     */
     public static <T extends Packet<T>> void sendToAllClientPlayers(T packet, MinecraftServer server) {
         server.getPlayerList().getPlayers().forEach(player -> {
             if (CHANNEL.canSendToPlayer(player, packet.type())) {

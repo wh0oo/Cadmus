@@ -13,12 +13,10 @@ import java.util.*;
 public class FlagApiImpl implements FlagApi {
 
     private static final Map<String, Flag<?>> FLAGS = new HashMap<>();
-    private static final Map<Flag<?>, String> DEFAULT_FLAG_IDS = new IdentityHashMap<>();
 
     @Override
     public void register(String name, Flag<?> defaultValue) {
         FLAGS.put(name, defaultValue);
-        DEFAULT_FLAG_IDS.put(defaultValue, name);
     }
 
     @Override
@@ -29,11 +27,6 @@ public class FlagApiImpl implements FlagApi {
     @Override
     public Map<String, Flag<?>> getAllDefaults() {
         return FLAGS;
-    }
-
-    @Override
-    public String getId(Flag<?> flag) {
-        return DEFAULT_FLAG_IDS.get(flag);
     }
 
     @Override

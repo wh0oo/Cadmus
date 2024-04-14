@@ -71,7 +71,7 @@ public class ClaimAreaCommand {
 
         int claimsCount = ClaimCommand.getClaimsCount(player, chunkload) + finalPositions.size();
         int maxClaims = chunkload ? ClaimLimitApi.API.getMaxChunkLoadedClaims(player) : ClaimLimitApi.API.getMaxClaims(player);
-        if (claimsCount >= maxClaims) {
+        if (claimsCount > maxClaims) {
             throw new SimpleCommandExceptionType(ModUtils.translatableWithStyle(
                 "command.cadmus.exception.not_enough_claims",
                 claimsCount, maxClaims

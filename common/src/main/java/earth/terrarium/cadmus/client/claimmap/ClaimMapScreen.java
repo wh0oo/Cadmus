@@ -16,6 +16,7 @@ import earth.terrarium.cadmus.common.commands.claims.ClaimCommandType;
 import earth.terrarium.cadmus.common.constants.ConstantComponents;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
@@ -95,7 +96,7 @@ public class ClaimMapScreen extends BaseCursorScreen {
         int maxX = pos.getMaxBlockX() + scale + 1;
         int maxZ = pos.getMaxBlockZ() + scale + 1;
 
-        this.future = CompletableFuture.supplyAsync(() -> ClaimMapTopologyAlgorithm.setColors(minX, minZ, maxX, maxZ, player.clientLevel, player));
+        this.future = CompletableFuture.supplyAsync(() -> ClaimMapTopologyAlgorithm.setColors(minX, minZ, maxX, maxZ, player.clientLevel, player), Util.backgroundExecutor());
         this.future.thenAccept(colors -> this.mapWidget.updateTexture(colors));
     }
 

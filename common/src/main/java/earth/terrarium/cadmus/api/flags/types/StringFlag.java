@@ -1,42 +1,37 @@
 package earth.terrarium.cadmus.api.flags.types;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import earth.terrarium.cadmus.api.flags.Flag;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 
-public record StringFlag(String value) implements Flag<String> {
+public record StringFlag(String id, String value) implements Flag<String> {
 
     @Override
-    public String get() {
-        return value;
+    public ArgumentBuilder<CommandSourceStack, ?> createArgument(String argument) {
+        return Commands.argument(argument, StringArgumentType.greedyString());
     }
 
     @Override
-    public RequiredArgumentBuilder<CommandSourceStack, String> createArgument(String name) {
-        return Commands.argument(name, StringArgumentType.greedyString());
+    public Flag<String> getFromArgument(String argument, CommandContext<CommandSourceStack> context) {
+        return new StringFlag(id, StringArgumentType.getString(context, argument));
     }
 
     @Override
-    public Flag<String> getFromArgument(String name, CommandContext<CommandSourceStack> context) {
-        return new StringFlag(StringArgumentType.getString(context, name));
+    public void serialize(CompoundTag tag) {
+        tag.putString(id, value);
     }
 
     @Override
-    public void serialize(String name, CompoundTag tag) {
-        tag.putString(name, value);
-    }
-
-    @Override
-    public Flag<String> deserialize(String name, CompoundTag tag) {
-        return new StringFlag(tag.getString(name));
+    public Flag<String> deserialize(CompoundTag tag) {
+        return new StringFlag(id, tag.getString(id));
     }
 
     @Override
     public String toString() {
-        return value;
+        return value.isEmpty() ? "\"\"" : value;
     }
 }

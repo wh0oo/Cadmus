@@ -33,8 +33,8 @@ public record ClientboundSyncMaxClaims(
                 new ResourceLocation(Cadmus.MOD_ID, "sync_max_claims"),
                 ObjectByteCodec.create(
                     ByteCodec.UUID.fieldOf(ClientboundSyncMaxClaims::id),
-                    ByteCodec.INT.fieldOf(ClientboundSyncMaxClaims::maxClaims),
-                    ByteCodec.INT.fieldOf(ClientboundSyncMaxClaims::maxChunkLoaded),
+                    ByteCodec.VAR_INT.fieldOf(ClientboundSyncMaxClaims::maxClaims),
+                    ByteCodec.VAR_INT.fieldOf(ClientboundSyncMaxClaims::maxChunkLoaded),
                     ClientboundSyncMaxClaims::new
                 )
             );

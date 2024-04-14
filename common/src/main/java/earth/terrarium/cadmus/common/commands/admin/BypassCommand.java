@@ -16,14 +16,14 @@ public class BypassCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
-            .requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(context -> {
-                    bypass(context.getSource(), EntityArgument.getPlayer(context, "player"));
-                    return 1;
-                })
-            )
+            .requires(source -> source.hasPermission(2))
             .then(Commands.literal("bypass")
+                .then(Commands.argument("player", EntityArgument.player())
+                    .executes(context -> {
+                        bypass(context.getSource(), EntityArgument.getPlayer(context, "player"));
+                        return 1;
+                    })
+                )
                 .executes(context -> {
                     bypass(context.getSource(), context.getSource().getPlayerOrException());
                     return 1;

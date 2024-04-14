@@ -40,14 +40,6 @@ public interface FlagApi {
     Map<String, Flag<?>> getAllDefaults();
 
     /**
-     * Gets the id of a flag.
-     *
-     * @param flag The flag.
-     * @return The id of the flag.
-     */
-    String getId(Flag<?> flag);
-
-    /**
      * Checks if a claim is an admin team.
      *
      * @param server The server.

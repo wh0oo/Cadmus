@@ -28,7 +28,7 @@ public class FlagSaveData extends SaveHandler {
             CompoundTag flagsTag = adminTag.getCompound(id);
             Map<String, Flag<?>> flags = new HashMap<>();
             flagsTag.getAllKeys().forEach(flag -> {
-                Flag<?> value = FlagApi.API.getDefaultValue(flag).deserialize(flag, flagsTag);
+                Flag<?> value = FlagApi.API.getDefaultValue(flag).deserialize(flagsTag);
                 flags.put(flag, value);
             });
             this.flags.put(UUID.fromString(id), flags);
@@ -44,7 +44,7 @@ public class FlagSaveData extends SaveHandler {
         CompoundTag adminTag = new CompoundTag();
         this.flags.forEach((id, flags) -> {
             CompoundTag flagsTag = new CompoundTag();
-            flags.forEach((name, flag) -> flag.serialize(name, flagsTag));
+            flags.forEach((flagId, flag) -> flag.serialize(flagsTag));
             adminTag.put(id.toString(), flagsTag);
         });
         tag.put("flags", adminTag);

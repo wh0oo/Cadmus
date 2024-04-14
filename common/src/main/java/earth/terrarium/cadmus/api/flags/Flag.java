@@ -1,7 +1,8 @@
 package earth.terrarium.cadmus.api.flags;
 
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -18,19 +19,47 @@ public interface Flag<T> {
      *
      * @return The value of the flag.
      */
-    T get();
+    T value();
 
-    RequiredArgumentBuilder<CommandSourceStack, T> createArgument(String name);
+    /**
+     * Gets the id of the flag.
+     *
+     * @return The id of the flag.
+     */
+    String id();
 
-    Flag<T> getFromArgument(String name, CommandContext<CommandSourceStack> context);
+    /**
+     * Creates a brigadier argument for the flag.
+     *
+     * @param argument The name of the argument.
+     * @return The brigadier argument.
+     */
+    ArgumentBuilder<CommandSourceStack, ?> createArgument(String argument);
 
-    void serialize(String name, CompoundTag tag);
+    /**
+     * Gets the flag from a brigadier argument.
+     *
+     * @param argument The name of the argument.
+     * @param context  The command context.
+     * @return The flag.
+     * @throws CommandSyntaxException If the flag could not be created.
+     */
+    Flag<T> getFromArgument(String argument, CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
 
-    Flag<T> deserialize(String name, CompoundTag tag);
+    /**
+     * Serializes the flag to NBT.
+     *
+     * @param tag The tag.
+     */
+    void serialize(CompoundTag tag);
 
-    default String id() {
-        return FlagApi.API.getId(this);
-    }
+    /**
+     * Deserializes the flag from NBT.
+     *
+     * @param tag The tag.
+     * @return The flag.
+     */
+    Flag<T> deserialize(CompoundTag tag);
 
     /**
      * Gets the value of the flag for a specific admin chunk.
@@ -42,9 +71,9 @@ public interface Flag<T> {
     default T get(Level level, ChunkPos pos) {
         return level instanceof ServerLevel serverLevel ?
             FlagApi.API.<T>getFlag(serverLevel, pos, id())
-                .map(Flag::get)
-                .orElse(this.get()) :
-            this.get();
+                .map(Flag::value)
+                .orElse(this.value()) :
+            this.value();
     }
 
     /**
@@ -55,6 +84,6 @@ public interface Flag<T> {
      * @return The value of the flag.
      */
     default T get(MinecraftServer server, UUID id) {
-        return FlagApi.API.<T>getFlag(server, id, id()).get();
+        return FlagApi.API.<T>getFlag(server, id, id()).value();
     }
 }

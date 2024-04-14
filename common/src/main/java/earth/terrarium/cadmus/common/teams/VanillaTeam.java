@@ -2,7 +2,6 @@ package earth.terrarium.cadmus.common.teams;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.mojang.authlib.GameProfile;
 import earth.terrarium.cadmus.api.claims.ClaimApi;
 import earth.terrarium.cadmus.api.teams.Team;
 import earth.terrarium.cadmus.common.utils.ModUtils;
@@ -17,7 +16,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.scores.PlayerTeam;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 public class VanillaTeam implements Team {
 
@@ -42,18 +44,18 @@ public class VanillaTeam implements Team {
     }
 
     @Override
-    public List<GameProfile> getMembers(Level level, UUID id) {
-        if (!(level instanceof ServerLevel serverLevel)) return List.of();
+    public Set<UUID> getMembers(Level level, UUID id) {
+        if (!(level instanceof ServerLevel serverLevel)) return Set.of();
         String name = TEAM_CACHE.inverse().get(id);
-        if (name == null) return List.of();
+        if (name == null) return Set.of();
 
         PlayerTeam playerTeam = level.getScoreboard().getPlayerTeam(name);
         GameProfileCache profileCache = serverLevel.getServer().getProfileCache();
-        if (playerTeam == null || profileCache == null) return List.of();
+        if (playerTeam == null || profileCache == null) return Set.of();
 
-        List<GameProfile> profiles = new ArrayList<>();
-        playerTeam.getPlayers().forEach(member -> profileCache.get(member).ifPresent(profiles::add));
-        return profiles;
+        Set<UUID> members = new HashSet<>();
+        playerTeam.getPlayers().forEach(member -> profileCache.get(member).ifPresent(profile -> members.add(profile.getId())));
+        return members;
     }
 
     @Override

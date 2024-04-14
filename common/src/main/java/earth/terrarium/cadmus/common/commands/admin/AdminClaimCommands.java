@@ -19,7 +19,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
 import java.util.Collection;
@@ -37,12 +36,11 @@ public class AdminClaimCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
-            .requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+            .requires(source -> source.hasPermission(2))
             .then(Commands.literal("adminclaims")
                 .then(Commands.literal("create")
                     .then(Commands.argument("id", StringArgumentType.string())
                         .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
                             String team = StringArgumentType.getString(context, "id");
                             create(context.getSource(), team);
                             return 1;
@@ -112,8 +110,8 @@ public class AdminClaimCommands {
     private static void create(CommandSourceStack source, String team) throws CommandSyntaxException {
         if (FlagApi.API.isAdminTeam(source.getServer(), team)) throw ADMIN_TEAM_ALREADY_EXISTS.create();
         UUID id = FlagApi.API.createAdminTeam(source.getServer(), team);
-        FlagApi.API.setFlag(source.getServer(), id, Flags.DISPLAY_NAME.id(), new StringFlag(team));
-        FlagApi.API.setFlag(source.getServer(), id, Flags.COLOR.id(), new ChatFormattingFlag(ChatFormatting.LIGHT_PURPLE));
+        FlagApi.API.setFlag(source.getServer(), id, Flags.DISPLAY_NAME.id(), new StringFlag(Flags.DISPLAY_NAME.id(), team));
+        FlagApi.API.setFlag(source.getServer(), id, Flags.COLOR.id(), new ChatFormattingFlag(Flags.COLOR.id(), ChatFormatting.LIGHT_PURPLE));
         source.sendSuccess(() -> ModUtils.translatableWithStyle("command.cadmus.admin.create", team), false);
         TeamApi.API.syncTeamInfo(source.getServer(), id, true);
     }

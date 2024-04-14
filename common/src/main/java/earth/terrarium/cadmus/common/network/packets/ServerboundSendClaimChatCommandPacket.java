@@ -34,7 +34,7 @@ public record ServerboundSendClaimChatCommandPacket(
                 new ResourceLocation(Cadmus.MOD_ID, "send_claim_chat_command"),
                 ObjectByteCodec.create(
                     ByteCodec.ofEnum(ClaimCommandType.class).fieldOf(ServerboundSendClaimChatCommandPacket::claimType),
-                    ByteCodec.STRING.fieldOf(ServerboundSendClaimChatCommandPacket::arguments),
+                    ByteCodec.STRING_COMPONENT.fieldOf(ServerboundSendClaimChatCommandPacket::arguments),
                     ServerboundSendClaimChatCommandPacket::new
                 )
             );

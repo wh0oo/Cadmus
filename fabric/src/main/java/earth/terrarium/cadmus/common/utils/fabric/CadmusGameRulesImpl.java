@@ -13,19 +13,11 @@ public class CadmusGameRulesImpl {
         return GameRuleRegistry.register(name, category, type);
     }
 
-    public static GameRules.Type<GameRules.IntegerValue> createIntRule(int defaultValue) {
-        return GameRuleFactory.createIntRule(defaultValue);
-    }
-
     public static GameRules.Type<GameRules.IntegerValue> createIntRule(int defaultValue, BiConsumer<MinecraftServer, GameRules.IntegerValue> changeListener) {
         return GameRuleFactory.createIntRule(defaultValue, changeListener);
     }
 
     public static GameRules.Type<GameRules.BooleanValue> createBooleanRule(boolean defaultValue) {
         return GameRuleFactory.createBooleanRule(defaultValue);
-    }
-
-    public static GameRules.Type<GameRules.BooleanValue> createBooleanRule(boolean defaultValue, BiConsumer<MinecraftServer, GameRules.BooleanValue> changeListener) {
-        return GameRuleFactory.createBooleanRule(defaultValue, changeListener);
     }
 }

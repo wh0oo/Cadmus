@@ -13,7 +13,7 @@ public class DefaultSettingsCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ProtectionApi.API.getSettings().forEach(setting ->
             dispatcher.register(Commands.literal("cadmus")
-                .requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+                .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("defaultsettings")
                     .then(Commands.literal(setting)
                         .then(Commands.argument("value", BoolArgumentType.bool())

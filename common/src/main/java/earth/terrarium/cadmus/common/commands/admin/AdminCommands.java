@@ -26,19 +26,17 @@ public class AdminCommands {
 
     public static final SimpleCommandExceptionType TEAM_DOES_NOT_EXIST = new SimpleCommandExceptionType(ConstantComponents.TEAM_DOES_NOT_EXIST);
 
-    public static final SuggestionProvider<CommandSourceStack> TEAM_SUGGESTION_PROVIDER = (context, builder) -> {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        return SharedSuggestionProvider.suggest(
-            TeamApi.API.getAllTeams(player.getServer()),
+    public static final SuggestionProvider<CommandSourceStack> TEAM_SUGGESTION_PROVIDER = (context, builder) ->
+        SharedSuggestionProvider.suggest(
+            TeamApi.API.getAllTeams(context.getSource().getServer()),
             builder,
             UUID::toString,
-            id -> TeamApi.API.getName(player.getServer(), id)
+            id -> TeamApi.API.getName(context.getSource().getServer(), id)
         );
-    };
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("cadmus")
-            .requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+            .requires(source -> source.hasPermission(2))
             .then(Commands.literal("admin")
                 .then(Commands.literal("claim")
                     .then(Commands.argument("id", UuidArgument.uuid())
