@@ -1,4 +1,4 @@
-# Ad Astra
+# Cadmus
 
 To add this library to your project, do the following:
 
